@@ -491,7 +491,7 @@ function App() {
       <div class="save-wrapper square">
         <div class="share-header">
           <h1 class="share-title">Vibe Animal Matcher</h1>
-          <p class="share-url">www.animalmatcher.com</p>
+          <p class="share-url">https://vibe-animal.vercel.app/</p>
         </div>
         <img src="${preview}" alt="Vibe" class="save-image-simple" />
         <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
@@ -502,7 +502,7 @@ function App() {
       <div class="save-wrapper">
         <div class="share-header">
           <h1 class="share-title">Vibe Animal Matcher</h1>
-          <p class="share-url">www.animalmatcher.com</p>
+          <p class="share-url">https://vibe-animal.vercel.app/</p>
         </div>
         <img src="${preview}" alt="Vibe" class="save-image" />
         <div class="result-content">${fullParsedHtml}</div>
@@ -778,9 +778,7 @@ function App() {
       )}
 
       <footer className="footer">
-        <p>
-          Powered by AI • Upload your images to discover your animal spirit!
-        </p>
+        <p>Powered by http://yeokim5.github.io/</p>
       </footer>
 
       {/* Payment popup component */}
