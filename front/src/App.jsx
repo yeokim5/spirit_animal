@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import Confetti from "react-confetti";
-import PaymentPopup from "./PaymentPopup"; // Assuming this component exists
+import PaymentPopup from "./PaymentPopup";
+// Assuming this component exists
 import html2canvas from "html2canvas";
-import "./App.css"; // Keep existing CSS for the main app
+import "./App.css";
 
+// Keep existing CSS for the main app
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null); // This holds the base64 image data for preview
@@ -19,7 +21,6 @@ function App() {
   const [confettiEmoji, setConfettiEmoji] = useState("");
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
-
   const animalEmojiMap = {
     // Mammals
     leopard: "🐆",
@@ -40,6 +41,7 @@ function App() {
     cat: "🐱",
     cow: "🐄",
     ox: "🐂",
+
     buffalo: "🐃",
     pig: "🐷",
     boar: "🐗",
@@ -60,6 +62,7 @@ function App() {
     rat: "🐀",
     rabbit: "🐰",
     chipmunk: "🐿️",
+
     hedgehog: "🦔",
 
     // Birds
@@ -82,6 +85,7 @@ function App() {
     tropical_fish: "🐠",
     blowfish: "🐡",
     shark: "🦈",
+
     dolphin: "🐬",
     whale: "🐳",
     seal: "🦭",
@@ -116,7 +120,6 @@ function App() {
     // Extinct
     dinosaur: "🦕",
   };
-
   /**
    * Extracts the animal name from the first line of the LLM response.
    * @param {string} response - The raw response string from the LLM.
@@ -165,6 +168,7 @@ function App() {
         const animalName = trimmedLine
           .replace(/^\*\*?animal\s*:\s*\*\*?/i, "") // Remove "**animal:**" or "animal: "
           .replace(/^animal\s*:\s*/i, "") // Remove "Animal:" or "animal:" without asterisks
+
           .replace(/\*\*/g, "") // Remove any remaining bold markers
           .trim();
         html += `<div class="animal_name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>`;
@@ -211,7 +215,6 @@ function App() {
 
           const nextLine = i + 1 < lines.length ? lines[i + 1] : null;
           const nextIndent = nextLine ? nextLine.search(/\S/) : -1;
-
           // Check for nested lists
           if (nextIndent > currentIndent && nextLine?.trim().startsWith("-")) {
             html += `<li>${itemContent
@@ -219,7 +222,9 @@ function App() {
                 /\*\*([^*]+)\*\*/g,
                 '<strong class="list-strong">$1</strong>'
               )
-              .replace(/:$/, "")}<ul>`; // Start nested list
+
+              .replace(/:$/, "")}<ul>`;
+            // Start nested list
             i++;
             // Consume all lines of the nested list
             while (i < lines.length && lines[i]?.search(/\S/) > currentIndent) {
@@ -230,8 +235,10 @@ function App() {
               )}</li>`;
               i++;
             }
-            html += "</ul></li>"; // Close nested list and parent list item
-            i--; // Decrement i to re-evaluate the line after the nested list ends
+            html += "</ul></li>";
+            // Close nested list and parent list item
+            i--;
+            // Decrement i to re-evaluate the line after the nested list ends
           } else {
             html += `<li>${itemContent.replace(
               /\*\*([^*]+)\*\*/g,
@@ -240,8 +247,10 @@ function App() {
           }
           i++;
         }
-        html += "</ul>"; // Close the main list
-        i--; // Decrement i to re-evaluate the line after the list ends
+        html += "</ul>";
+        // Close the main list
+        i--;
+        // Decrement i to re-evaluate the line after the list ends
         continue;
       }
 
@@ -256,7 +265,6 @@ function App() {
     html += "</div>";
     return html;
   };
-
   // Effect hook to trigger confetti animation when a new result is available
   useEffect(() => {
     if (!result) {
@@ -292,7 +300,8 @@ function App() {
       const timer = setTimeout(() => {
         setShowConfetti(false);
       }, 5000); // Confetti lasts for 5 seconds
-      return () => clearTimeout(timer); // Cleanup timer on component unmount or result change
+      return () => clearTimeout(timer);
+      // Cleanup timer on component unmount or result change
     } else {
       setShowConfetti(false);
       setConfettiEmoji("");
@@ -309,11 +318,15 @@ function App() {
       setSelectedFile(file);
       setError(null);
       setResult(null); // Clear previous results
-      setShowConfetti(false); // Turn off confetti
-      setConfettiEmoji(""); // Clear confetti emoji
+      setShowConfetti(false);
+      // Turn off confetti
+      setConfettiEmoji("");
+      // Clear confetti emoji
       const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target.result); // Set image preview
-      reader.readAsDataURL(file); // Read file as Data URL
+      reader.onload = (e) => setPreview(e.target.result);
+      // Set image preview
+      reader.readAsDataURL(file);
+      // Read file as Data URL
     } else {
       setError("Please select a valid image file");
     }
@@ -357,7 +370,7 @@ function App() {
       return;
     }
 
-    // Check if user has already paid; if not, show payment popup
+    // Check if user has already paid;
     if (!hasPaid) {
       setShowPaymentPopup(true);
       return;
@@ -366,7 +379,6 @@ function App() {
     // Proceed with analysis if payment is complete
     await performAnalysis();
   };
-
   /**
    * Performs the actual image analysis by sending the image to the backend API.
    */
@@ -387,9 +399,11 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        setResult(data.result); // Set the analysis result
+        setResult(data.result);
+        // Set the analysis result
       } else {
-        setError(data.message || "Failed to analyze image"); // Display error message
+        setError(data.message || "Failed to analyze image");
+        // Display error message
       }
     } catch (err) {
       setError("Network error. Please check if the backend server is running.");
@@ -397,7 +411,6 @@ function App() {
       setIsLoading(false); // End loading state
     }
   };
-
   /**
    * Callback function for successful payment. Sets payment status and proceeds with analysis.
    */
@@ -407,7 +420,6 @@ function App() {
     // Automatically proceed with analysis after successful payment
     performAnalysis();
   };
-
   /**
    * Resets the form to its initial state, clearing selections and results.
    */
@@ -418,12 +430,13 @@ function App() {
     setError(null);
     setShowConfetti(false);
     setConfettiEmoji("");
-    setHasPaid(false); // Reset payment status when starting over
+    setHasPaid(false);
+    // Reset payment status when starting over
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input value
+      fileInputRef.current.value = "";
+      // Clear the file input value
     }
   };
-
   /**
    * Generates and saves the result images.
    * On mobile, it triggers the native share functionality for the simple square image.
@@ -431,7 +444,6 @@ function App() {
    */
   const saveResult = async () => {
     if (!result || !preview) return;
-
     setIsSaving(true);
     try {
       // 1. Extract necessary data
@@ -441,51 +453,73 @@ function App() {
       // 2. Helper function to create a styled container for rendering (No changes here)
       const createContainer = (content, isSimple = false) => {
         const container = document.createElement("div");
-
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-          position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
-          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+          position: fixed; 
+          top: -9999px; left: -9999px; width: 800px; height: 800px;
+          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px; 
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333; 
           box-sizing: border-box; display: flex; flex-direction: column;
-          justify-content: center; align-items: center; overflow: hidden;
+          justify-content: center; align-items: center; 
+          overflow: hidden; 
         `;
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-          position: fixed; top: -9999px; left: -9999px; width: 800px;
+          position: fixed; 
+          top: -9999px; left: -9999px; width: 800px;
           background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-          padding: 40px; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          color: #333; box-sizing: border-box;
+          padding: 40px; 
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          color: #333; box-sizing: border-box; 
         `;
         }
 
         const styleTag = document.createElement("style");
         styleTag.innerHTML = `
-        .save-wrapper { width: 100%; text-align: center; }
-        .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-        .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-        .share-header { margin-bottom: 15px; }
-        .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-        .share-url { font-size: 2rem; color: #666; margin: 0; }
-        .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-        .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
-        .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
-        .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
-        .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
-        .result-content li { margin-bottom: 1rem; color: #555; }
-        .result-content li strong { color: #667eea; font-weight: 600; }
-        .result-content .container { max-width: 100%; }
-        .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+        .save-wrapper { width: 100%; text-align: center; 
+        }
+        .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; 
+        align-items: center; text-align: center; }
+        .save-image-simple { max-width: 450px; max-height: 450px; width: auto; 
+        height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; 
+        }
+        .save-image { max-width: 50%; height: auto; border-radius: 15px; 
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; 
+        }
+        .share-header { margin-bottom: 15px; 
+        }
+        .share-title { font-size: 3rem; font-weight: 700; color: #333; 
+        margin: 0 0 5px 0; }
+        .share-url { font-size: 2rem; color: #666; 
+        margin: 0; }
+        .result-content { background: white; border-radius: 15px; padding: 2rem; 
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+        .result-content .animal_name { color: #5a4830; 
+        font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); 
+        }
+        .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; 
+        margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; 
+        }
+        .result-content p { text-align: left; margin-bottom: 1rem; color: #555; 
+        }
+        .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; 
+        }
+        .result-content li { margin-bottom: 1rem; color: #555; 
+        }
+        .result-content li strong { color: #667eea; font-weight: 600; 
+        }
+        .result-content .container { max-width: 100%; 
+        }
+        .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; 
+        margin-top: 10px; }
       `;
 
         container.innerHTML = content;
         container.prepend(styleTag);
         return container;
       };
-
       // 3. Define HTML content for both simple and detailed images (No changes here)
       const simpleContent = `
       <div class="save-wrapper square">
@@ -495,6 +529,7 @@ function App() {
         </div>
         <img src="${preview}" alt="Vibe" class="save-image-simple" />
         <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+      
       </div>
     `;
 
@@ -508,14 +543,11 @@ function App() {
         <div class="result-content">${fullParsedHtml}</div>
       </div>
     `;
-
       const simpleContainer = createContainer(simpleContent, true);
       const detailedContainer = createContainer(detailedContent, false);
-
       // 4. Append containers to the DOM to be rendered (No changes here)
       document.body.appendChild(simpleContainer);
       document.body.appendChild(detailedContainer);
-
       // 5. Render both containers to canvases in parallel (No changes here)
       const [simpleCanvas, detailedCanvas] = await Promise.all([
         html2canvas(simpleContainer, {
@@ -529,11 +561,9 @@ function App() {
           useCORS: true,
         }),
       ]);
-
       // 6. Clean up the containers from the DOM (No changes here)
       document.body.removeChild(simpleContainer);
       document.body.removeChild(detailedContainer);
-
       // 7. Helper to trigger download for a canvas (No changes here)
       const downloadCanvas = (canvas, filename) => {
         canvas.toBlob((blob) => {
@@ -542,6 +572,7 @@ function App() {
             return;
           }
           const url = URL.createObjectURL(blob);
+
           const link = document.createElement("a");
           link.href = url;
           link.download = filename;
@@ -583,18 +614,25 @@ function App() {
           ) {
             await navigator.share({
               title: "Vibe Animal Matcher Result",
+
               text: "Check out my vibe animal!",
               files: [simpleFile],
             });
           } else {
-            // This is unlikely if navigator.share exists, but it's a safe fallback
-            throw new Error("Sharing this file is not supported.");
+            // If canShare returns false, or if navigator.canShare is not available but navigator.share is,
+            // we should still attempt to share but fall back to download if share fails.
+            // This case should ideally lead to a direct share attempt.
+            await navigator.share({
+              title: "Vibe Animal Matcher Result",
+              text: "Check out my vibe animal!",
+              files: [simpleFile],
+            });
           }
         } catch (error) {
           // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
             console.error("Share failed, falling back to download:", error);
-            // Fallback to downloading both images if sharing fails
+            // Fallback to downloading both images if sharing fails or is not supported as expected
             downloadCanvas(
               simpleCanvas,
               `vibe-animal-simple-${Date.now()}.png`
@@ -622,7 +660,6 @@ function App() {
       setIsSaving(false);
     }
   };
-
   return (
     <div className="app">
       <header className="header">
@@ -653,11 +690,13 @@ function App() {
                 <h3>Upload Your Image</h3>
                 <p>Drag and drop an image here, or use the buttons below</p>
                 <p className="file-types">Supports: JPG, PNG, GIF, BMP</p>
+
                 <div
                   className="upload-buttons"
                   style={{
                     display: "flex",
                     gap: "1rem",
+
                     marginTop: "1rem",
                     justifyContent: "center",
                   }}
@@ -669,6 +708,7 @@ function App() {
                   >
                     📷 Take Photo
                   </button>
+
                   <button
                     type="button"
                     className="btn btn-secondary"
@@ -680,7 +720,8 @@ function App() {
               </div>
             )}
           </div>
-          {/* Camera input (for taking a photo) */}
+          {/* Camera input 
+ (for taking a photo) */}
           <input
             ref={cameraInputRef}
             type="file"
@@ -689,6 +730,7 @@ function App() {
             onChange={handleFileInputChange}
             style={{ display: "none" }}
           />
+
           {/* Gallery input (for uploading from gallery) */}
           <input
             ref={fileInputRef}
@@ -697,6 +739,7 @@ function App() {
             onChange={handleFileInputChange}
             style={{ display: "none" }}
           />
+
           <div className="button-group">
             {selectedFile && !result && (
               <button
@@ -739,6 +782,7 @@ function App() {
               className="result-content"
               dangerouslySetInnerHTML={{ __html: parseLLMResponse(result) }}
             />
+
             <div className="save-button-container">
               <button
                 className="btn btn-save"
@@ -762,6 +806,7 @@ function App() {
           numberOfPieces={100}
           confettiSource={{
             x: 0,
+
             y: 0,
             w: window.innerWidth,
             h: 0,
