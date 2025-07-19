@@ -426,7 +426,7 @@ function App() {
 
   /**
    * Generates and saves the result images.
-   * On mobile, it triggers the native share functionality to share both images.
+   * On mobile, it triggers the native share functionality for the simple square image.
    * On desktop, it downloads both images.
    */
   const saveResult = async () => {
@@ -438,41 +438,26 @@ function App() {
       const animalName = extractAnimalName(result);
       const fullParsedHtml = parseLLMResponse(result);
 
-      // 2. Helper function to create a styled container for rendering
+      // 2. Helper function to create a styled container for rendering (No changes here)
       const createContainer = (content, isSimple = false) => {
         const container = document.createElement("div");
 
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-          position: fixed;
-          top: -9999px;
-          left: -9999px;
-          width: 800px;
-          height: 800px;
-          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-          padding: 30px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          color: #333;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          overflow: hidden;
+          position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
+          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+          box-sizing: border-box; display: flex; flex-direction: column;
+          justify-content: center; align-items: center; overflow: hidden;
         `;
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-          position: fixed;
-          top: -9999px;
-          left: -9999px;
-          width: 800px;
+          position: fixed; top: -9999px; left: -9999px; width: 800px;
           background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-          padding: 40px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          color: #333;
-          box-sizing: border-box;
+          padding: 40px; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          color: #333; box-sizing: border-box;
         `;
         }
 
@@ -501,7 +486,7 @@ function App() {
         return container;
       };
 
-      // 3. Define HTML content for both simple and detailed images
+      // 3. Define HTML content for both simple and detailed images (No changes here)
       const simpleContent = `
       <div class="save-wrapper square">
         <div class="share-header">
@@ -527,11 +512,11 @@ function App() {
       const simpleContainer = createContainer(simpleContent, true);
       const detailedContainer = createContainer(detailedContent, false);
 
-      // 4. Append containers to the DOM to be rendered
+      // 4. Append containers to the DOM to be rendered (No changes here)
       document.body.appendChild(simpleContainer);
       document.body.appendChild(detailedContainer);
 
-      // 5. Render both containers to canvases in parallel
+      // 5. Render both containers to canvases in parallel (No changes here)
       const [simpleCanvas, detailedCanvas] = await Promise.all([
         html2canvas(simpleContainer, {
           scale: 2,
@@ -545,11 +530,11 @@ function App() {
         }),
       ]);
 
-      // 6. Clean up the containers from the DOM
+      // 6. Clean up the containers from the DOM (No changes here)
       document.body.removeChild(simpleContainer);
       document.body.removeChild(detailedContainer);
 
-      // 7. Helper to trigger download for a canvas
+      // 7. Helper to trigger download for a canvas (No changes here)
       const downloadCanvas = (canvas, filename) => {
         canvas.toBlob((blob) => {
           if (!blob) {
@@ -567,7 +552,7 @@ function App() {
         }, "image/png");
       };
 
-      // Helper to convert a canvas to a File object
+      // Helper to convert a canvas to a File object (No changes here)
       const canvasToFile = (canvas, filename) => {
         return new Promise((resolve, reject) => {
           canvas.toBlob((blob) => {
@@ -583,49 +568,33 @@ function App() {
 
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // Use Web Share API on mobile if available
+      // *** MODIFIED LOGIC BEGINS HERE ***
+
+      // Use Web Share API on mobile if available, sharing ONLY the simple image
       if (isMobile && navigator.share) {
         try {
-          const simpleFileName = `vibe-animal-simple-${Date.now()}.png`;
-          const detailedFileName = `vibe-animal-detailed-${Date.now()}.png`;
+          const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
+          const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
 
-          // Generate both File objects in parallel
-          const filesArray = await Promise.all([
-            canvasToFile(simpleCanvas, simpleFileName),
-            canvasToFile(detailedCanvas, detailedFileName),
-          ]);
-
-          // Check if the browser can share these files
-          if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+          // Check if the browser can share this single file
+          if (
+            navigator.canShare &&
+            navigator.canShare({ files: [simpleFile] })
+          ) {
             await navigator.share({
               title: "Vibe Animal Matcher Result",
-              text: "Check out my vibe animal results! Here are the simple and detailed versions.",
-              files: filesArray,
+              text: "Check out my vibe animal!",
+              files: [simpleFile],
             });
           } else {
-            // If sharing multiple files isn't supported, try sharing just the simple one
-            const simpleFile = filesArray[0];
-            if (
-              navigator.canShare &&
-              navigator.canShare({ files: [simpleFile] })
-            ) {
-              await navigator.share({
-                title: "Vibe Animal Matcher Result",
-                text: "Check out my vibe animal!",
-                files: [simpleFile],
-              });
-            } else {
-              // If even single file share fails, trigger the fallback.
-              throw new Error(
-                "Sharing not supported, falling back to download."
-              );
-            }
+            // This is unlikely if navigator.share exists, but it's a safe fallback
+            throw new Error("Sharing this file is not supported.");
           }
         } catch (error) {
           // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
             console.error("Share failed, falling back to download:", error);
-            // Fallback to downloading both images for the user
+            // Fallback to downloading both images if sharing fails
             downloadCanvas(
               simpleCanvas,
               `vibe-animal-simple-${Date.now()}.png`
@@ -639,7 +608,7 @@ function App() {
           }
         }
       } else {
-        // Fallback for desktop or non-supporting mobile browsers: download both images
+        // Fallback for desktop: download both images
         downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
         downloadCanvas(
           detailedCanvas,
