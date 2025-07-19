@@ -425,8 +425,9 @@ function App() {
   };
 
   /**
-   * Generates and downloads two versions of the result: a simple one and a detailed one.
-   * Both images will be in 1:1 (square) aspect ratio.
+   * Generates and saves the result images.
+   * On mobile, it triggers the native share functionality to share both images.
+   * On desktop, it downloads both images.
    */
   const saveResult = async () => {
     if (!result || !preview) return;
@@ -444,65 +445,56 @@ function App() {
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-            position: fixed;
-            top: -9999px;
-            left: -9999px;
-            width: 800px;
-            height: 800px;
-            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-            padding: 30px;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-          `;
+          position: fixed;
+          top: -9999px;
+          left: -9999px;
+          width: 800px;
+          height: 800px;
+          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+          padding: 30px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          color: #333;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+        `;
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-            position: fixed;
-            top: -9999px;
-            left: -9999px;
-            width: 800px;
-            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-            padding: 40px;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-            box-sizing: border-box;
-          `;
+          position: fixed;
+          top: -9999px;
+          left: -9999px;
+          width: 800px;
+          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+          padding: 40px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          color: #333;
+          box-sizing: border-box;
+        `;
         }
 
         const styleTag = document.createElement("style");
         styleTag.innerHTML = `
-          .save-wrapper { width: 100%; text-align: center; }
-          .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-          
-          /* Simple view image - larger and preserve aspect ratio */
-          .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-          
-          /* Detailed view image - original styling */
-          .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-          
-          .share-header { margin-bottom: 15px; }
-          .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-          .share-url { font-size: 2rem; color: #666; margin: 0; }
-          
-          /* Styles for the Detailed View (original format) */
-          .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-          .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
-          .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
-          .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
-          .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
-          .result-content li { margin-bottom: 1rem; color: #555; }
-          .result-content li strong { color: #667eea; font-weight: 600; }
-          .result-content .container { max-width: 100%; }
-
-          /* Styles for the Simple View (square format) */
-          .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-        `;
+        .save-wrapper { width: 100%; text-align: center; }
+        .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
+        .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
+        .share-header { margin-bottom: 15px; }
+        .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
+        .share-url { font-size: 2rem; color: #666; margin: 0; }
+        .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+        .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
+        .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
+        .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
+        .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
+        .result-content li { margin-bottom: 1rem; color: #555; }
+        .result-content li strong { color: #667eea; font-weight: 600; }
+        .result-content .container { max-width: 100%; }
+        .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+      `;
 
         container.innerHTML = content;
         container.prepend(styleTag);
@@ -511,26 +503,26 @@ function App() {
 
       // 3. Define HTML content for both simple and detailed images
       const simpleContent = `
-        <div class="save-wrapper square">
-          <div class="share-header">
-            <h1 class="share-title">Vibe Animal Matcher</h1>
-            <p class="share-url">www.animalmatcher.com</p>
-          </div>
-          <img src="${preview}" alt="Vibe" class="save-image-simple" />
-          <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+      <div class="save-wrapper square">
+        <div class="share-header">
+          <h1 class="share-title">Vibe Animal Matcher</h1>
+          <p class="share-url">www.animalmatcher.com</p>
         </div>
-      `;
+        <img src="${preview}" alt="Vibe" class="save-image-simple" />
+        <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+      </div>
+    `;
 
       const detailedContent = `
-        <div class="save-wrapper">
-          <div class="share-header">
-            <h1 class="share-title">Vibe Animal Matcher</h1>
-            <p class="share-url">www.animalmatcher.com</p>
-          </div>
-          <img src="${preview}" alt="Vibe" class="save-image" />
-          <div class="result-content">${fullParsedHtml}</div>
+      <div class="save-wrapper">
+        <div class="share-header">
+          <h1 class="share-title">Vibe Animal Matcher</h1>
+          <p class="share-url">www.animalmatcher.com</p>
         </div>
-      `;
+        <img src="${preview}" alt="Vibe" class="save-image" />
+        <div class="result-content">${fullParsedHtml}</div>
+      </div>
+    `;
 
       const simpleContainer = createContainer(simpleContent, true);
       const detailedContainer = createContainer(detailedContent, false);
@@ -575,57 +567,79 @@ function App() {
         }, "image/png");
       };
 
-      // Mobile sharing logic
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const shareCanvas = async (canvas, filename) => {
+      // Helper to convert a canvas to a File object
+      const canvasToFile = (canvas, filename) => {
         return new Promise((resolve, reject) => {
-          canvas.toBlob(async (blob) => {
+          canvas.toBlob((blob) => {
             if (!blob) {
-              reject("Failed to create blob for sharing.");
+              reject(new Error("Canvas to Blob conversion failed."));
               return;
             }
-
             const file = new File([blob], filename, { type: "image/png" });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              try {
-                await navigator.share({
-                  title: "Vibe Animal Matcher Result",
-                  text: "Check out my vibe animal!",
-                  files: [file],
-                });
-                resolve();
-              } catch (error) {
-                console.error("Share failed:", error);
-                reject(error);
-              }
-            } else {
-              reject("Sharing not supported.");
-            }
+            resolve(file);
           }, "image/png");
         });
       };
 
-      // 8. Download or share both images
-      if (isMobile && navigator.canShare) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      // Use Web Share API on mobile if available
+      if (isMobile && navigator.share) {
         try {
-          await shareCanvas(
-            simpleCanvas,
-            `vibe-animal-simple-${Date.now()}.png`
-          );
-          await shareCanvas(
-            detailedCanvas,
-            `vibe-animal-detailed-${Date.now()}.png`
-          );
-        } catch (err) {
-          console.error("Sharing failed, falling back to download.", err);
-          downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
-          downloadCanvas(
-            detailedCanvas,
-            `vibe-animal-detailed-${Date.now()}.png`
-          );
+          const simpleFileName = `vibe-animal-simple-${Date.now()}.png`;
+          const detailedFileName = `vibe-animal-detailed-${Date.now()}.png`;
+
+          // Generate both File objects in parallel
+          const filesArray = await Promise.all([
+            canvasToFile(simpleCanvas, simpleFileName),
+            canvasToFile(detailedCanvas, detailedFileName),
+          ]);
+
+          // Check if the browser can share these files
+          if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+            await navigator.share({
+              title: "Vibe Animal Matcher Result",
+              text: "Check out my vibe animal results! Here are the simple and detailed versions.",
+              files: filesArray,
+            });
+          } else {
+            // If sharing multiple files isn't supported, try sharing just the simple one
+            const simpleFile = filesArray[0];
+            if (
+              navigator.canShare &&
+              navigator.canShare({ files: [simpleFile] })
+            ) {
+              await navigator.share({
+                title: "Vibe Animal Matcher Result",
+                text: "Check out my vibe animal!",
+                files: [simpleFile],
+              });
+            } else {
+              // If even single file share fails, trigger the fallback.
+              throw new Error(
+                "Sharing not supported, falling back to download."
+              );
+            }
+          }
+        } catch (error) {
+          // Don't trigger download if the user simply cancelled the share dialog
+          if (error.name !== "AbortError") {
+            console.error("Share failed, falling back to download:", error);
+            // Fallback to downloading both images for the user
+            downloadCanvas(
+              simpleCanvas,
+              `vibe-animal-simple-${Date.now()}.png`
+            );
+            downloadCanvas(
+              detailedCanvas,
+              `vibe-animal-detailed-${Date.now()}.png`
+            );
+          } else {
+            console.log("Share action was cancelled by the user.");
+          }
         }
       } else {
+        // Fallback for desktop or non-supporting mobile browsers: download both images
         downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
         downloadCanvas(
           detailedCanvas,

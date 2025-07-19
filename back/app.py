@@ -214,10 +214,12 @@ def predict_path():
 def analyze_animal_api(image_path: str):
     """
     Modified version of analyze_animal that returns the result instead of printing
+    Retries up to 3 times if the response contains 'sorry'.
     """
     import base64
     from openai import OpenAI
-    
+    import time
+
     # Load API Key from environment variable
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
@@ -249,30 +251,37 @@ Please respond in the following format:
 [With simplified bullet points, Connection of the vibe and visual elements to the chosen animal. Elaborate on why this animal *feels right* for this aesthetic.]
 """
     
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
+    last_response = None
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
                             }
-                        }
-                    ]
-                }
-            ],
-            max_tokens=300
-        )
-        
-        return response.choices[0].message.content
-        
-    except Exception as e:
-        return f"Error calling OpenAI API: {e}"
+                        ]
+                    }
+                ],
+                max_tokens=300
+            )
+            result = response.choices[0].message.content
+            last_response = result
+            if result and 'sorry' not in result.lower():
+                return result
+            else:
+                time.sleep(1)  # Wait 1 second before retrying
+        except Exception as e:
+            last_response = f"Error calling OpenAI API: {e}"
+            break  # Don't retry on API errors
+    return last_response
 
 if __name__ == '__main__':
     print("Starting Aesthetic Matcher API Server...")
