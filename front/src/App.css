@@ -1,0 +1,563 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: rgb(0, 0, 0);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header p {
+  font-size: 1.1rem;
+  color: rgba(0, 0, 0, 0.9);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Main content */
+.main {
+  flex: 1;
+  padding: 2rem 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Upload section */
+.upload-section {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.upload-area {
+  border: 3px dashed #ddd;
+  border-radius: 15px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafafa;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-area:hover {
+  border-color: #ffffff;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+}
+
+.upload-area.has-preview {
+  border-style: solid;
+  padding: 0;
+  background: white;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upload-icon {
+  font-size: 4rem;
+  opacity: 0.7;
+}
+
+.upload-placeholder h3 {
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.upload-placeholder p {
+  color: #666;
+  font-size: 1rem;
+}
+
+.file-types {
+  font-size: 0.9rem !important;
+  color: #999 !important;
+  font-style: italic;
+}
+
+/* Upload buttons styling */
+.upload-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Preview styles */
+.preview-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.preview-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.preview-container:hover .preview-overlay {
+  opacity: 1;
+}
+
+.preview-overlay p {
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Buttons */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  color: #666;
+  border: 2px solid #ddd;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  font-size: 1.1rem;
+  padding: 15px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  white-space: nowrap; /* Prevent text wrapping */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+  background: linear-gradient(135deg, #45a049 0%, #4caf50 100%);
+}
+
+.btn-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.save-button-container {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.save-hint {
+  margin-top: 1rem;
+  color: #666;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+/* Error message */
+.error-message {
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: #c33;
+  text-align: center;
+}
+
+.error-message p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading p {
+  color: #666;
+  font-weight: 500;
+}
+
+/* Result section */
+.result-section {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.result-section h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+.result-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+.result-content .container {
+  max-width: 100%;
+}
+
+.result-content .animal_name {
+  color: #5a4830;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  word-break: keep-all; /* Prevent breaking of animal names */
+  white-space: nowrap; /* Keep animal name on one line */
+  overflow: hidden; /* Hide overflow if too long */
+  text-overflow: ellipsis; /* Show ... if text is too long */
+}
+
+.result-content h2 {
+  color: #333;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem 0;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5rem;
+}
+
+.result-content h3 {
+  color: #667eea;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.result-content p {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+.result-content ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.result-content li {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+.result-content li strong {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.result-content li p {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: auto;
+}
+
+.footer p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .header p {
+    font-size: 1rem;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+
+  .upload-section {
+    padding: 1.5rem;
+  }
+
+  .upload-area {
+    padding: 2rem 1rem;
+  }
+
+  .upload-buttons {
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
+  .upload-buttons .btn {
+    min-width: 160px;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+  }
+
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .preview-container {
+    height: 250px;
+  }
+
+  .result-content .animal_name {
+    font-size: 2rem; /* Smaller on tablet */
+    white-space: normal; /* Allow wrapping on smaller tablets */
+    overflow: visible;
+    text-overflow: initial;
+  }
+
+  .btn-save {
+    font-size: 1rem;
+    padding: 12px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.8rem;
+  }
+
+  .upload-section {
+    padding: 1rem;
+  }
+
+  .upload-area {
+    padding: 1.5rem 0.5rem;
+  }
+
+  .upload-buttons {
+    gap: 0.5rem;
+  }
+
+  .upload-buttons .btn {
+    min-width: 140px;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    line-height: 1.2;
+  }
+
+  .preview-container {
+    height: 200px;
+  }
+
+  .result-content .animal_name {
+    font-size: 1.5rem; /* Even smaller on mobile */
+    line-height: 1.2;
+    white-space: normal; /* Allow wrapping on mobile */
+    overflow: visible;
+    text-overflow: initial;
+  }
+
+  .btn-save {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+    min-width: auto;
+    width: auto;
+  }
+
+  .save-button-container {
+    padding: 1.5rem 1rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .upload-buttons .btn {
+    min-width: 120px;
+    font-size: 0.8rem;
+    padding: 8px 10px;
+  }
+
+  .result-content .animal_name {
+    font-size: 1.3rem;
+  }
+
+  .btn-save {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+  }
+}
+
+.animal_name {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  word-break: keep-all; /* Prevent breaking of animal names */
+  white-space: nowrap; /* Keep animal name on one line */
+  overflow: hidden; /* Hide overflow if too long */
+  text-overflow: ellipsis; /* Show ... if text is too long */
+}
+
+/* Mobile specific animal name adjustments */
+@media (max-width: 768px) {
+  .animal_name {
+    font-size: 2em;
+    white-space: normal; /* Allow wrapping on smaller screens */
+    overflow: visible;
+    text-overflow: initial;
+  }
+}
+
+@media (max-width: 480px) {
+  .animal_name {
+    font-size: 1.5em;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 360px) {
+  .animal_name {
+    font-size: 1.3em;
+  }
+}

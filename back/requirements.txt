@@ -1,0 +1,10 @@
+rembg
+Pillow
+numpy
+openai
+onnxruntime
+flask
+flask-cors
+werkzeug
+python-dotenv
+stripe
