@@ -21,7 +21,7 @@ function App() {
   const [hasPaid, setHasPaid] = useState(false);
 
   const animalEmojiMap = {
-    // ... (animalEmojiMap remains the same)
+    // Mammals
     leopard: "🐆",
     lion: "🦁",
     tiger: "🐅",
@@ -147,7 +147,6 @@ function App() {
    * @returns {string} The HTML string representing the parsed response.
    */
   const parseLLMResponse = (response) => {
-    // ... (parseLLMResponse remains the same)
     if (!response) return "";
 
     const lines = response.split("\n");
@@ -300,7 +299,11 @@ function App() {
     }
   }, [result]); // Effect runs whenever the 'result' state changes
 
-  // ... (handleFileSelect, handleDrop, handleDragOver, handleFileInputChange, handleSubmit, performAnalysis, handlePaymentSuccess, resetForm functions remain the same)
+  /**
+   * Handles the selection of an image file, setting it as the selected file
+   * and generating a preview.
+   * @param {File} file - The selected image file.
+   */
   const handleFileSelect = (file) => {
     if (file && file.type.startsWith("image/")) {
       setSelectedFile(file);
@@ -315,30 +318,58 @@ function App() {
       setError("Please select a valid image file");
     }
   };
+
+  /**
+   * Handles the file drop event for drag-and-drop functionality.
+   * @param {Event} e - The drag event.
+   */
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     handleFileSelect(file);
   };
+
+  /**
+   * Prevents default behavior for drag over events to allow dropping.
+   * @param {Event} e - The drag event.
+   */
   const handleDragOver = (e) => {
     e.preventDefault();
   };
+
+  /**
+   * Handles file selection from the hidden file input.
+   * @param {Event} e - The change event from the input.
+   */
   const handleFileInputChange = (e) => {
     const file = e.target.files[0];
     handleFileSelect(file);
+    // Reset the value so the same file can be selected again if needed
     e.target.value = "";
   };
+
+  /**
+   * Initiates the image analysis process. Checks for file selection and payment status.
+   */
   const handleSubmit = async () => {
     if (!selectedFile) {
       setError("Please select an image first");
       return;
     }
+
+    // Check if user has already paid; if not, show payment popup
     if (!hasPaid) {
       setShowPaymentPopup(true);
       return;
     }
+
+    // Proceed with analysis if payment is complete
     await performAnalysis();
   };
+
+  /**
+   * Performs the actual image analysis by sending the image to the backend API.
+   */
   const performAnalysis = async () => {
     setIsLoading(true);
     setError(null);
@@ -348,6 +379,7 @@ function App() {
     const formData = new FormData();
     formData.append("image", selectedFile);
     try {
+      // Get API URL from environment variable or default to localhost
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
@@ -355,21 +387,30 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        setResult(data.result);
+        setResult(data.result); // Set the analysis result
       } else {
-        setError(data.message || "Failed to analyze image");
+        setError(data.message || "Failed to analyze image"); // Display error message
       }
     } catch (err) {
       setError("Network error. Please check if the backend server is running.");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // End loading state
     }
   };
+
+  /**
+   * Callback function for successful payment. Sets payment status and proceeds with analysis.
+   */
   const handlePaymentSuccess = () => {
     setHasPaid(true);
     setShowPaymentPopup(false);
+    // Automatically proceed with analysis after successful payment
     performAnalysis();
   };
+
+  /**
+   * Resets the form to its initial state, clearing selections and results.
+   */
   const resetForm = () => {
     setSelectedFile(null);
     setPreview(null);
@@ -377,18 +418,17 @@ function App() {
     setError(null);
     setShowConfetti(false);
     setConfettiEmoji("");
-    setHasPaid(false);
+    setHasPaid(false); // Reset payment status when starting over
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = ""; // Clear the file input value
     }
   };
 
-  // CHANGE: Replaced 'saveResult' with a new function to handle mobile sharing and desktop downloading.
   /**
-   * Generates result images and uses the Web Share API on mobile devices,
-   * falling back to a standard download on desktop.
+   * Generates and downloads two versions of the result: a simple one and a detailed one.
+   * Both images will be in 1:1 (square) aspect ratio.
    */
-  const shareOrDownloadResult = async () => {
+  const saveResult = async () => {
     if (!result || !preview) return;
 
     setIsSaving(true);
@@ -404,41 +444,65 @@ function App() {
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-            position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
-            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
-            box-sizing: border-box; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; overflow: hidden;
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 800px;
+            height: 800px;
+            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+            padding: 30px;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
           `;
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-            position: fixed; top: -9999px; left: -9999px; width: 800px;
-            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 40px;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 800px;
+            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+            padding: 40px;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
             box-sizing: border-box;
           `;
         }
 
         const styleTag = document.createElement("style");
         styleTag.innerHTML = `
-            .save-wrapper { width: 100%; text-align: center; }
-            .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-            .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-            .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-            .share-header { margin-bottom: 15px; }
-            .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-            .share-url { font-size: 2rem; color: #666; margin: 0; }
-            .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-            .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
-            .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
-            .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
-            .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
-            .result-content li { margin-bottom: 1rem; color: #555; }
-            .result-content li strong { color: #667eea; font-weight: 600; }
-            .result-content .container { max-width: 100%; }
-            .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-          `;
+          .save-wrapper { width: 100%; text-align: center; }
+          .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+          
+          /* Simple view image - larger and preserve aspect ratio */
+          .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
+          
+          /* Detailed view image - original styling */
+          .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
+          
+          .share-header { margin-bottom: 15px; }
+          .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
+          .share-url { font-size: 2rem; color: #666; margin: 0; }
+          
+          /* Styles for the Detailed View (original format) */
+          .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+          .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
+          .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
+          .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
+          .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
+          .result-content li { margin-bottom: 1rem; color: #555; }
+          .result-content li strong { color: #667eea; font-weight: 600; }
+          .result-content .container { max-width: 100%; }
+
+          /* Styles for the Simple View (square format) */
+          .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+        `;
 
         container.innerHTML = content;
         container.prepend(styleTag);
@@ -471,9 +535,11 @@ function App() {
       const simpleContainer = createContainer(simpleContent, true);
       const detailedContainer = createContainer(detailedContent, false);
 
+      // 4. Append containers to the DOM to be rendered
       document.body.appendChild(simpleContainer);
       document.body.appendChild(detailedContainer);
 
+      // 5. Render both containers to canvases in parallel
       const [simpleCanvas, detailedCanvas] = await Promise.all([
         html2canvas(simpleContainer, {
           scale: 2,
@@ -481,56 +547,90 @@ function App() {
           width: 800,
           height: 800,
         }),
-        html2canvas(detailedContainer, { scale: 2, useCORS: true }),
+        html2canvas(detailedContainer, {
+          scale: 2,
+          useCORS: true,
+        }),
       ]);
 
+      // 6. Clean up the containers from the DOM
       document.body.removeChild(simpleContainer);
       document.body.removeChild(detailedContainer);
 
-      // CHANGE: Use Web Share API on mobile, fallback to download on desktop
-      if (navigator.share && navigator.canShare) {
-        // Mobile Path: Use the Web Share API 📱
-        const [simpleBlob, detailedBlob] = await Promise.all([
-          new Promise((resolve) => simpleCanvas.toBlob(resolve, "image/png")),
-          new Promise((resolve) => detailedCanvas.toBlob(resolve, "image/png")),
-        ]);
-
-        const files = [
-          new File([simpleBlob], "vibe-animal-simple.png", {
-            type: "image/png",
-          }),
-          new File([detailedBlob], "vibe-animal-detailed.png", {
-            type: "image/png",
-          }),
-        ];
-
-        // Check if the browser can share these files
-        if (navigator.canShare({ files })) {
-          try {
-            await navigator.share({
-              title: "My Vibe Animal!",
-              text: "Check out the animal that matches my vibe.",
-              files: files,
-            });
-          } catch (err) {
-            // Handle case where user cancels the share action
-            if (err.name !== "AbortError") {
-              console.error("Sharing failed:", err);
-              setError(
-                "Could not share the image. Please try downloading instead."
-              );
-            }
+      // 7. Helper to trigger download for a canvas
+      const downloadCanvas = (canvas, filename) => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            console.error("Failed to create blob from canvas for", filename);
+            return;
           }
-        } else {
-          // Fallback if sharing these specific files isn't supported
-          setError("Your browser doesn't support sharing these files.");
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      };
+
+      // Mobile sharing logic
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const shareCanvas = async (canvas, filename) => {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              reject("Failed to create blob for sharing.");
+              return;
+            }
+
+            const file = new File([blob], filename, { type: "image/png" });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({
+                  title: "Vibe Animal Matcher Result",
+                  text: "Check out my vibe animal!",
+                  files: [file],
+                });
+                resolve();
+              } catch (error) {
+                console.error("Share failed:", error);
+                reject(error);
+              }
+            } else {
+              reject("Sharing not supported.");
+            }
+          }, "image/png");
+        });
+      };
+
+      // 8. Download or share both images
+      if (isMobile && navigator.canShare) {
+        try {
+          await shareCanvas(
+            simpleCanvas,
+            `vibe-animal-simple-${Date.now()}.png`
+          );
+          await shareCanvas(
+            detailedCanvas,
+            `vibe-animal-detailed-${Date.now()}.png`
+          );
+        } catch (err) {
+          console.error("Sharing failed, falling back to download.", err);
+          downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
+          downloadCanvas(
+            detailedCanvas,
+            `vibe-animal-detailed-${Date.now()}.png`
+          );
         }
       } else {
-        // Desktop Path: Download the simplified image only
-        const link = document.createElement("a");
-        link.download = `vibe-animal-simple-${Date.now()}.png`;
-        link.href = simpleCanvas.toDataURL("image/png");
-        link.click();
+        downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
+        downloadCanvas(
+          detailedCanvas,
+          `vibe-animal-detailed-${Date.now()}.png`
+        );
       }
     } catch (error) {
       console.error("Error saving result:", error);
@@ -555,6 +655,7 @@ function App() {
             className={`upload-area ${preview ? "has-preview" : ""}`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
+            // Remove onClick from upload-area
           >
             {preview ? (
               <div className="preview-container">
@@ -596,7 +697,7 @@ function App() {
               </div>
             )}
           </div>
-          {/* Inputs remain hidden */}
+          {/* Camera input (for taking a photo) */}
           <input
             ref={cameraInputRef}
             type="file"
@@ -605,6 +706,7 @@ function App() {
             onChange={handleFileInputChange}
             style={{ display: "none" }}
           />
+          {/* Gallery input (for uploading from gallery) */}
           <input
             ref={fileInputRef}
             type="file"
@@ -657,8 +759,7 @@ function App() {
             <div className="save-button-container">
               <button
                 className="btn btn-save"
-                // CHANGE: Call the new function
-                onClick={shareOrDownloadResult}
+                onClick={saveResult}
                 disabled={isSaving}
               >
                 {isSaving ? "Saving..." : "💾 Save & Share"}
@@ -672,7 +773,6 @@ function App() {
         )}
       </main>
 
-      {/* ... (Confetti, Footer, and PaymentPopup components remain the same) */}
       {showConfetti && confettiEmoji && (
         <Confetti
           recycle={false}
@@ -693,9 +793,14 @@ function App() {
           }}
         />
       )}
+
       <footer className="footer">
-        <p>Powered by https://yeokim5.github.io/</p>
+        <p>
+          Powered by AI • Upload your images to discover your animal spirit!
+        </p>
       </footer>
+
+      {/* Payment popup component */}
       <PaymentPopup
         isOpen={showPaymentPopup}
         onClose={() => setShowPaymentPopup(false)}
