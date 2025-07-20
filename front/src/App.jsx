@@ -609,7 +609,6 @@ function App() {
         justify-content: center; align-items: center; overflow: hidden;
       `;
 
-      const emojiRow = "🐆 🦁 🐅 🐘 🐼 🐻 🐨 🦍 🐶 🐩 🐺 🦊";
       const subtitle = "https://vibe-animal.vercel.app/";
       const animalDisplay = `${confettiEmoji} ${animalName.toUpperCase()} ${confettiEmoji}`;
 
@@ -659,7 +658,7 @@ function App() {
           </span> */}
           AI Vibe Animal Matcher
         </h1>
-        🐆 🦁 🐅 🐘 🐼 🐻 🐨 🦍 🐶 🐩 🐺 🦊
+        🦁 🐼 🐻 🐨 🐶 🐺 🦊 🦝 🐱
         <h3 className="wavy-underline">
           Use the most advanced AI to discover what animal best represents your
           vibe!
