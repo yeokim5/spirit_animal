@@ -572,18 +572,41 @@ function App() {
     setIsSaving(true);
     try {
       const animalName = extractAnimalName(result);
-      const shareData = {
-        title: "My Vibe Animal Result",
-        text: `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`,
-        url: "https://vibe-animal.vercel.app/",
-      };
-      if (navigator.share) {
-        await navigator.share(shareData);
+      const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`;
+      const shareUrl = "https://vibe-animal.vercel.app/";
+      // Try to create an image of the result section
+      let file = null;
+      if (resultRef.current && window.html2canvas) {
+        const canvas = await html2canvas(resultRef.current, {
+          useCORS: true,
+          scale: 2,
+        });
+        const blob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/png", 0.95)
+        );
+        if (blob) {
+          file = new File(
+            [blob],
+            `vibe-animal-${animalName.replace(/\s+/g, "-").toLowerCase()}.png`,
+            { type: "image/png" }
+          );
+        }
+      }
+      if (navigator.canShare && file && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "My Vibe Animal Result",
+          text: shareText,
+          url: shareUrl,
+          files: [file],
+        });
+      } else if (navigator.share) {
+        await navigator.share({
+          title: "My Vibe Animal Result",
+          text: `${shareText} ${shareUrl}`,
+        });
       } else {
         // fallback: copy text to clipboard
-        await navigator.clipboard.writeText(
-          `${shareData.text} ${shareData.url}`
-        );
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
         alert("Share not supported, copied text to clipboard!");
       }
     } catch (error) {
