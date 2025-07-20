@@ -670,22 +670,22 @@ function App() {
       document.body.removeChild(detailedContainer);
 
       // 7. Helper to trigger download for a canvas (No changes here)
-      const downloadCanvas = (canvas, filename) => {
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            console.error("Failed to create blob from canvas for", filename);
-            return;
-          }
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }, "image/png");
-      };
+      // const downloadCanvas = (canvas, filename) => {
+      //   canvas.toBlob((blob) => {
+      //     if (!blob) {
+      //       console.error("Failed to create blob from canvas for", filename);
+      //       return;
+      //     }
+      //     const url = URL.createObjectURL(blob);
+      //     const link = document.createElement("a");
+      //     link.href = url;
+      //     link.download = filename;
+      //     document.body.appendChild(link);
+      //     link.click();
+      //     document.body.removeChild(link);
+      //     URL.revokeObjectURL(url);
+      //   }, "image/png");
+      // };
 
       // Helper to convert a canvas to a File object with better error handling
       const canvasToFile = (canvas, filename) => {
@@ -759,34 +759,19 @@ function App() {
           console.error("❌ Share failed:", error);
           // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
-            console.log("🔄 Falling back to download due to share error");
             // On mobile, show a message about the fallback
             if (isMobile) {
-              setError("Sharing not available. Downloading image as fallback.");
+              setError("Sharing not available on this device.");
               setTimeout(() => setError(null), 3000);
             }
-            // Fallback to downloading the simple image
-            downloadCanvas(
-              simpleCanvas,
-              `vibe-animal-result-${Date.now()}.png`
-            );
           } else {
             console.log("✅ Share action was cancelled by the user.");
           }
         }
       } else {
-        console.log("🔄 No share API available, falling back to download");
-        // On desktop or when share API is not available, download both images
-        if (!isMobile) {
-          downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
-          downloadCanvas(
-            detailedCanvas,
-            `vibe-animal-detailed-${Date.now()}.png`
-          );
-        } else {
-          // On mobile without share API, download just the simple image
-          downloadCanvas(simpleCanvas, `vibe-animal-result-${Date.now()}.png`);
-        }
+        console.log("❌ No share API available on this device.");
+        setError("Sharing is not supported on this device or browser.");
+        setTimeout(() => setError(null), 3000);
       }
     } catch (error) {
       console.error("Error saving result:", error);
