@@ -650,15 +650,16 @@ function App() {
           className="gradient-title"
           style={{ display: "flex", alignItems: "center", gap: "0.5em" }}
         >
-          <span className="header-emoji">
+          {/* <span className="header-emoji">
             {
               Object.values(animalEmojiMap)[
                 Math.floor(Math.random() * Object.values(animalEmojiMap).length)
               ]
             }
-          </span>
+          </span> */}
           AI Vibe Animal Matcher
         </h1>
+        🐆 🦁 🐅 🐘 🐼 🐻 🐨 🦍 🐶 🐩 🐺 🦊
         <h3 className="wavy-underline">
           Use the most advanced AI to discover what animal best represents your
           vibe!
