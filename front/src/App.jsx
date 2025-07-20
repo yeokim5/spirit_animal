@@ -626,7 +626,7 @@ function App() {
       const simpleContent = `
       <div class="save-wrapper square">
         <div class="share-header">
-          <h1 class="share-title">Vibe Animal Matcher</h1>
+          <h1 class="share-title">AI Vibe Animal Matcher</h1>
           <p class="share-url">https://vibe-animal.vercel.app/</p>
         </div>
         <img src="${preview}" alt="Vibe" class="save-image-simple" />
@@ -637,7 +637,7 @@ function App() {
       const detailedContent = `
       <div class="save-wrapper">
         <div class="share-header">
-          <h1 class="share-title">Vibe Animal Matcher</h1>
+          <h1 class="share-title">AI Vibe Animal Matcher</h1>
           <p class="share-url">https://vibe-animal.vercel.app/</p>
         </div>
         <img src="${preview}" alt="Vibe" class="save-image" />
