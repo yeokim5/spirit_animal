@@ -645,15 +645,26 @@ function App() {
       </div>
     `;
 
+      // Render the simple version for sharing
       const simpleContainer = createContainer(simpleContent, true);
       document.body.appendChild(simpleContainer);
 
-      const simpleCanvas = await html2canvas(simpleContainer, {
-        scale: 2,
-        useCORS: true,
-        width: 800,
-        height: 800,
-      });
+      let simpleCanvas;
+      try {
+        simpleCanvas = await html2canvas(simpleContainer, {
+          scale: 2,
+          useCORS: true,
+          width: 800,
+          height: 800,
+        });
+      } catch (canvasError) {
+        console.error("Error generating canvas:", canvasError);
+        setError("Failed to generate image for sharing. Please try again.");
+        setTimeout(() => setError(null), 3000);
+        document.body.removeChild(simpleContainer);
+        setIsSaving(false);
+        return;
+      }
 
       document.body.removeChild(simpleContainer);
 
@@ -679,41 +690,60 @@ function App() {
           navigator.userAgent
         );
 
-      if (navigator.share && typeof navigator.share === "function") {
+      if (navigator.share) {
+        // Check if navigator.share API is available
         try {
           const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
           const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
 
+          // Check if the device can share files
           if (
             navigator.canShare &&
             navigator.canShare({ files: [simpleFile] })
           ) {
+            console.log("Attempting to share file via Web Share API.");
             await navigator.share({
               title: "Vibe Animal Matcher Result",
               text: `Check out my vibe animal: ${animalName}! 🦁`,
               files: [simpleFile],
             });
+            console.log("Share successful (with file).");
           } else {
+            console.log(
+              "File sharing not supported, falling back to text/URL sharing."
+            );
             await navigator.share({
               title: "Vibe Animal Matcher Result",
               text: `Check out my vibe animal: ${animalName}! 🦁 Visit https://vibe-animal.vercel.app/ to try it yourself!`,
             });
+            console.log("Share successful (text/URL only).");
           }
         } catch (error) {
-          if (error.name !== "AbortError") {
+          if (error.name === "AbortError") {
+            console.log("Share operation aborted by user.");
+          } else {
+            console.error("Error during sharing:", error);
+            console.error("Error name:", error.name);
+            console.error("Error message:", error.message);
             if (isMobile) {
-              setError("Sharing not available on this device.");
-              setTimeout(() => setError(null), 3000);
+              setError(`Sharing failed: ${error.message || "Unknown error"}.`);
+            } else {
+              setError("Sharing failed. Please try again.");
             }
+            setTimeout(() => setError(null), 3000);
           }
         }
       } else {
+        console.log("Web Share API is not supported on this device/browser.");
         setError("Sharing is not supported on this device or browser.");
         setTimeout(() => setError(null), 3000);
       }
     } catch (error) {
-      console.error("Error saving result:", error);
-      setError("Failed to save result. Please try again.");
+      console.error("Overall error in saveResult:", error);
+      setError(
+        "An unexpected error occurred during sharing. Please try again."
+      );
+      setTimeout(() => setError(null), 3000);
     } finally {
       setIsSaving(false);
     }
