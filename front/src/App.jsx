@@ -521,9 +521,9 @@ function App() {
   };
 
   /**
-   * Generates and saves the result images.
-   * On mobile, it triggers the native share functionality for the simple square image.
-   * On desktop, it downloads both images.
+   * Generates and shares the result images.
+   * Always attempts to use the Web Share API first, regardless of device type.
+   * Falls back to downloading images if sharing is not available.
    */
   const saveResult = async () => {
     if (!result || !preview) return;
@@ -675,39 +675,13 @@ function App() {
         });
       };
 
-      // Comprehensive mobile detection
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileUA =
-        /iphone|ipad|ipod|android|blackberry|windows phone/i.test(userAgent);
-      const isTouchDevice =
-        "ontouchstart" in window || navigator.maxTouchPoints > 0;
-      const isSmallScreen = window.innerWidth <= 768;
-      const isStandalone = window.navigator.standalone === true;
-      const isPWA = window.matchMedia("(display-mode: standalone)").matches;
+      // Always try to share first, regardless of device type
+      console.log("📤 Attempting to share on any device...");
+      console.log("📱 Share API available:", !!navigator.share);
+      console.log("📱 Can share check available:", !!navigator.canShare);
 
-      // Consider it mobile if it has mobile UA OR (touch device AND small screen)
-      const isMobile = isMobileUA || (isTouchDevice && isSmallScreen);
-
-      console.log("📱 Mobile detection:", {
-        userAgent: userAgent.substring(0, 50) + "...",
-        isMobileUA,
-        isTouchDevice,
-        isSmallScreen,
-        isStandalone,
-        isPWA,
-        isMobile,
-        hasShare: !!navigator.share,
-        canShare: !!navigator.canShare,
-        windowWidth: window.innerWidth,
-        maxTouchPoints: navigator.maxTouchPoints,
-      });
-
-      // Use Web Share API on mobile if available, sharing ONLY the simple image
-      if (
-        isMobile &&
-        navigator.share &&
-        typeof navigator.share === "function"
-      ) {
+      // Try sharing with Web Share API if available
+      if (navigator.share && typeof navigator.share === "function") {
         try {
           const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
           const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
@@ -765,7 +739,7 @@ function App() {
             console.log("🔄 Falling back to download due to share error");
             // Show a user-friendly message about the fallback
             setError(
-              "Sharing not available on this device. Downloading images instead."
+              "Sharing not available on this device. Downloading images as fallback."
             );
             setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
 
@@ -783,8 +757,8 @@ function App() {
           }
         }
       } else {
-        console.log("🖥️ Desktop detected or no share API, downloading images");
-        // Fallback for desktop: download both images
+        console.log("🔄 No share API available, falling back to download");
+        // Fallback: download both images if sharing is not available
         downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
         downloadCanvas(
           detailedCanvas,
@@ -921,12 +895,8 @@ function App() {
                 onClick={saveResult}
                 disabled={isSaving}
               >
-                {isSaving ? "Saving..." : "💾 Save & Share"}
+                {isSaving ? "Sharing..." : "📤 Share Result"}
               </button>
-              <p className="save-hint">
-                Save your result as a beautiful square image to share on social
-                media!
-              </p>
             </div>
           </div>
         )}

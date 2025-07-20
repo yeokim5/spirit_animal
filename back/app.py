@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 import stripe
 from background_remover import remove_background
 from animal_analyzer import analyze_animal
+from functools import wraps
+import time
+import threading
 
 # Load environment variables
 load_dotenv()
@@ -21,6 +24,26 @@ CORS(app)  # Enable CORS for all routes
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+# Rate limiting and concurrency control
+request_lock = threading.Lock()
+active_requests = 0
+MAX_CONCURRENT_REQUESTS = 3
+
+def check_concurrency_limit():
+    """Check if we can handle another concurrent request"""
+    global active_requests
+    with request_lock:
+        if active_requests >= MAX_CONCURRENT_REQUESTS:
+            return False
+        active_requests += 1
+        return True
+
+def release_concurrency_slot():
+    """Release a concurrency slot when request completes"""
+    global active_requests
+    with request_lock:
+        active_requests = max(0, active_requests - 1)
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -30,7 +53,12 @@ def health_check():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'message': 'Aesthetic Matcher API is running'
+        'message': 'Aesthetic Matcher API is running',
+        'concurrency': {
+            'active_requests': active_requests,
+            'max_concurrent': MAX_CONCURRENT_REQUESTS,
+            'available_slots': MAX_CONCURRENT_REQUESTS - active_requests
+        }
     })
 
 @app.route('/create-payment-intent', methods=['POST'])
@@ -71,9 +99,17 @@ def predict():
     3. Analyzes the image for animal matching
     4. Returns the result
     """
+    # Check concurrency limit
+    if not check_concurrency_limit():
+        return jsonify({
+            'error': 'Server busy',
+            'message': 'Too many requests being processed. Please try again in a moment.'
+        }), 429
+    
     try:
         # Check if image file is present
         if 'image' not in request.files:
+            release_concurrency_slot()
             return jsonify({
                 'error': 'No image file provided',
                 'message': 'Please upload an image file'
@@ -145,6 +181,8 @@ def predict():
             'error': 'Internal server error',
             'message': str(e)
         }), 500
+    finally:
+        release_concurrency_slot()
 
 @app.route('/predict_path', methods=['POST'])
 def predict_path():
