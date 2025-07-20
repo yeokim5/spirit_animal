@@ -648,6 +648,9 @@ function App() {
       const simpleContainer = createContainer(simpleContent, true);
       document.body.appendChild(simpleContainer);
 
+      // Add a slight pause before converting the canvas to help the DOM settle
+      await new Promise((r) => setTimeout(r, 200));
+
       const simpleCanvas = await html2canvas(simpleContainer, {
         scale: 2,
         useCORS: true,
