@@ -43,13 +43,13 @@ def health_check():
 
 @app.route('/create-payment-intent', methods=['POST'])
 def create_payment_intent():
-    """Create a Stripe payment intent for 50 cents"""
+    """Create a Stripe payment intent for 99 cents"""
     try:
         data = request.get_json()
         
         # Create a PaymentIntent with the order amount and currency
         intent = stripe.PaymentIntent.create(
-            amount=50,  # 50 cents in cents
+            amount=99,
             currency='usd',
             automatic_payment_methods={
                 'enabled': True,
