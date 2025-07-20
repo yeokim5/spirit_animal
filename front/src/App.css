@@ -186,8 +186,9 @@ body {
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  color: white;
+  background: #f8f9fa;
+  color: #666;
+  border: 2px solid #ddd;
   font-size: 1.1rem;
   padding: 15px 30px;
   border-radius: 12px;
@@ -199,9 +200,8 @@ body {
 }
 
 .btn-save:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
-  background: linear-gradient(135deg, #45a049 0%, #4caf50 100%);
+  background: #e9ecef;
+  border-color: #adb5bd;
 }
 
 .btn-save:disabled {
@@ -760,7 +760,21 @@ body {
 }
 
 .header h1,
-.header .gradient-title,
-.animal_name {
+.gradient-title {
   font-family: "Alfa Slab One", cursive, sans-serif;
+  font-size: 3.2rem;
+  font-weight: 900;
+  background: linear-gradient(90deg, #00bfff 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  margin-bottom: 0.7em;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 16px rgba(0, 191, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  justify-content: center;
+  width: 100%;
 }

@@ -128,9 +128,6 @@ const SharingModal = ({
               }}
               className="preview-canvas"
             />
-            <p className="result-text">
-              {confettiEmoji} {animalName} {confettiEmoji}
-            </p>
           </div>
 
           <div className="sharing-options">

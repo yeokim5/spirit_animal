@@ -599,25 +599,26 @@ function App() {
 
     try {
       const animalName = extractAnimalName(result);
-
       // 1. Create a hidden container to render the shareable image
       const container = document.createElement("div");
       container.style.cssText = `
         position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
         background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333;
         box-sizing: border-box; display: flex; flex-direction: column;
         justify-content: center; align-items: center; overflow: hidden;
       `;
 
+      const emojiRow = "🐆 🦁 🐅 🐘 🐼 🐻 🐨 🦍 🐶 🐩 🐺 🦊";
+      const subtitle = "https://vibe-animal.vercel.app/";
+      const animalDisplay = `${confettiEmoji} ${animalName.toUpperCase()} ${confettiEmoji}`;
+
       const simpleContent = `
         <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-          <div style="margin-bottom: 15px;">
-            <h1 style="font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0;">AI Vibe Animal Matcher</h1>
-            <p style="font-size: 2rem; color: #666; margin: 0;">vibe-animal.vercel.app</p>
-          </div>
+          <h1 style="font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 10px 0;">AI Vibe Animal Matcher</h1>
+          <div style="font-size: 1.3rem; margin-bottom: 20px; color: #888;">${subtitle}</div>
           <img src="${preview}" alt="Vibe" style="max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto;" />
-          <div style="font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px;">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+          <div style="font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; letter-spacing: 2px;">${animalDisplay}</div>
         </div>
       `;
       container.innerHTML = simpleContent;
@@ -637,7 +638,6 @@ function App() {
       setShareCanvas(canvas);
       setShowShareModal(true);
     } catch (error) {
-      // console.error("Error creating shareable image:", error);
       setError("Failed to create shareable image. Please try again.");
     } finally {
       setIsSaving(false);
