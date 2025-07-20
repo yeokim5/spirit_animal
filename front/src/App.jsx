@@ -565,9 +565,11 @@ function App() {
    * Optimized for mobile sharing with proper fallbacks.
    */
   const saveResult = async () => {
-    if (!result || !preview) return;
+    if (!result || !preview || isSaving) return; // Prevent multiple simultaneous executions
 
     setIsSaving(true);
+    setError(null); // Clear any existing errors at the start
+
     try {
       const animalName = extractAnimalName(result);
       const fullParsedHtml = parseLLMResponse(result);
@@ -578,45 +580,45 @@ function App() {
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-          position: fixed;
-          top: -9999px; left: -9999px; width: 800px; height: 800px;
-          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
-          box-sizing: border-box; display: flex; flex-direction: column;
-          justify-content: center; align-items: center;
-          overflow: hidden;
-        `;
+        position: fixed;
+        top: -9999px; left: -9999px; width: 800px; height: 800px;
+        background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+        box-sizing: border-box; display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        overflow: hidden;
+      `;
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-          position: fixed;
-          top: -9999px; left: -9999px; width: 800px;
-          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-          padding: 40px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          color: #333; box-sizing: border-box;
-        `;
+        position: fixed;
+        top: -9999px; left: -9999px; width: 800px;
+        background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+        padding: 40px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #333; box-sizing: border-box;
+      `;
         }
 
         const styleTag = document.createElement("style");
         styleTag.innerHTML = `
-        .save-wrapper { width: 100%; text-align: center; }
-        .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-        .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-        .share-header { margin-bottom: 15px; }
-        .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-        .share-url { font-size: 2rem; color: #666; margin: 0; }
-        .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-        .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
-        .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
-        .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
-        .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
-        .result-content li { margin-bottom: 1rem; color: #555; }
-        .result-content li strong { color: #667eea; font-weight: 600; }
-        .result-content .container { max-width: 100%; }
-        .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-      `;
+      .save-wrapper { width: 100%; text-align: center; }
+      .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+      .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
+      .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
+      .share-header { margin-bottom: 15px; }
+      .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
+      .share-url { font-size: 2rem; color: #666; margin: 0; }
+      .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+      .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
+      .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
+      .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
+      .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
+      .result-content li { margin-bottom: 1rem; color: #555; }
+      .result-content li strong { color: #667eea; font-weight: 600; }
+      .result-content .container { max-width: 100%; }
+      .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+    `;
 
         container.innerHTML = content;
         container.prepend(styleTag);
@@ -624,26 +626,15 @@ function App() {
       };
 
       const simpleContent = `
-      <div class="save-wrapper square">
-        <div class="share-header">
-          <h1 class="share-title">AI Vibe Animal Matcher</h1>
-          <p class="share-url">https://vibe-animal.vercel.app/</p>
-        </div>
-        <img src="${preview}" alt="Vibe" class="save-image-simple" />
-        <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+    <div class="save-wrapper square">
+      <div class="share-header">
+        <h1 class="share-title">AI Vibe Animal Matcher</h1>
+        <p class="share-url">https://vibe-animal.vercel.app/</p>
       </div>
-    `;
-
-      const detailedContent = `
-      <div class="save-wrapper">
-        <div class="share-header">
-          <h1 class="share-title">AI Vibe Animal Matcher</h1>
-          <p class="share-url">https://vibe-animal.vercel.app/</p>
-        </div>
-        <img src="${preview}" alt="Vibe" class="save-image" />
-        <div class="result-content">${fullParsedHtml}</div>
-      </div>
-    `;
+      <img src="${preview}" alt="Vibe" class="save-image-simple" />
+      <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+    </div>
+  `;
 
       const simpleContainer = createContainer(simpleContent, true);
       document.body.appendChild(simpleContainer);
@@ -677,46 +668,42 @@ function App() {
         });
       };
 
-      const isMobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        );
-
-      if (navigator.share && typeof navigator.share === "function") {
-        try {
-          const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
-          const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
-
-          if (
-            navigator.canShare &&
-            navigator.canShare({ files: [simpleFile] })
-          ) {
-            await navigator.share({
-              title: "AI Vibe Animal Matcher Result",
-              text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-              files: [simpleFile],
-            });
-          } else {
-            await navigator.share({
-              title: "AI Vibe Animal Matcher Result",
-              text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-            });
-          }
-        } catch (error) {
-          if (error.name !== "AbortError") {
-            if (isMobile) {
-              setError("Sharing not available on this device.");
-              setTimeout(() => setError(null), 3000);
-            }
-          }
-        }
-      } else {
+      // Check if sharing is supported
+      if (!navigator.share || typeof navigator.share !== "function") {
         setError("Sharing is not supported on this device or browser.");
-        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      try {
+        const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
+        const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
+
+        // Check if file sharing is supported
+        if (navigator.canShare && navigator.canShare({ files: [simpleFile] })) {
+          await navigator.share({
+            title: "AI Vibe Animal Matcher Result",
+            text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+            files: [simpleFile],
+          });
+        } else {
+          // Fallback to text-only sharing if file sharing isn't supported
+          await navigator.share({
+            title: "AI Vibe Animal Matcher Result",
+            text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+            url: "https://vibe-animal.vercel.app/",
+          });
+        }
+      } catch (shareError) {
+        // Only show error if it's not user cancellation
+        if (shareError.name !== "AbortError") {
+          console.error("Sharing failed:", shareError);
+          setError("Sharing failed. Please try again.");
+        }
+        // If it's AbortError (user canceled), we don't show any error
       }
     } catch (error) {
-      console.error("Error saving result:", error);
-      setError("Failed to save result. Please try again.");
+      console.error("Error preparing result for sharing:", error);
+      setError("Failed to prepare result for sharing. Please try again.");
     } finally {
       setIsSaving(false);
     }
