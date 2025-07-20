@@ -987,9 +987,9 @@ function App() {
           Powered by{" "}
           <a
             href="http://yeokim5.github.io/"
-            style={{ color: "blue", textDecoration: "none" }}
+            style={{ textDecoration: "none" }}
           >
-            <strong>http://yeokim5.github.io/</strong>
+            http://yeokim5.github.io/
           </a>
         </p>
       </footer>
