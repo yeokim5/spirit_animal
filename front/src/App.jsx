@@ -3,7 +3,6 @@ import Confetti from "react-confetti";
 import PaymentPopup from "./PaymentPopup"; // Assuming this component exists
 import html2canvas from "html2canvas";
 import "./App.css"; // Keep existing CSS for the main app
-import SharingModal from "./SharingModal";
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -20,8 +19,6 @@ function App() {
   const [confettiEmoji, setConfettiEmoji] = useState("");
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
-  const [showSharingModal, setShowSharingModal] = useState(false);
-  const [generatedCanvas, setGeneratedCanvas] = useState(null);
 
   // Example images for the carousel
   const exampleImages = [
@@ -564,229 +561,161 @@ function App() {
   };
 
   /**
-   * Enhanced sharing function that includes both the result image and original photo
-   * Works on mobile and desktop with proper fallbacks
+   * Generates and shares the result images.
+   * Optimized for mobile sharing with proper fallbacks.
    */
-  const shareResult = async () => {
+  const saveResult = async () => {
     if (!result || !preview) return;
 
     setIsSaving(true);
-
     try {
       const animalName = extractAnimalName(result);
-      const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
+      const fullParsedHtml = parseLLMResponse(result);
 
-      const filesToShare = [];
+      // Helper function to create a styled container for rendering
+      const createContainer = (content, isSimple = false) => {
+        const container = document.createElement("div");
+        if (isSimple) {
+          // Square format for simple view
+          container.style.cssText = `
+          position: fixed;
+          top: -9999px; left: -9999px; width: 800px; height: 800px;
+          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+          box-sizing: border-box; display: flex; flex-direction: column;
+          justify-content: center; align-items: center;
+          overflow: hidden;
+        `;
+        } else {
+          // Original rectangular format for detailed view
+          container.style.cssText = `
+          position: fixed;
+          top: -9999px; left: -9999px; width: 800px;
+          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
+          padding: 40px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          color: #333; box-sizing: border-box;
+        `;
+        }
 
-      // 1. Create a screenshot of the result section
-      if (resultRef.current) {
-        try {
-          const canvas = await html2canvas(resultRef.current, {
-            useCORS: true,
-            scale: 2,
-            backgroundColor: "#ffffff",
-            logging: false,
-            allowTaint: true,
-            foreignObjectRendering: true,
-          });
+        const styleTag = document.createElement("style");
+        styleTag.innerHTML = `
+        .save-wrapper { width: 100%; text-align: center; }
+        .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
+        .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
+        .share-header { margin-bottom: 15px; }
+        .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
+        .share-url { font-size: 2rem; color: #666; margin: 0; }
+        .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+        .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
+        .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
+        .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
+        .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
+        .result-content li { margin-bottom: 1rem; color: #555; }
+        .result-content li strong { color: #667eea; font-weight: 600; }
+        .result-content .container { max-width: 100%; }
+        .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+      `;
 
-          const resultBlob = await new Promise((resolve) =>
-            canvas.toBlob(resolve, "image/png", 0.95)
+        container.innerHTML = content;
+        container.prepend(styleTag);
+        return container;
+      };
+
+      const simpleContent = `
+      <div class="save-wrapper square">
+        <div class="share-header">
+          <h1 class="share-title">Vibe Animal Matcher</h1>
+          <p class="share-url">https://vibe-animal.vercel.app/</p>
+        </div>
+        <img src="${preview}" alt="Vibe" class="save-image-simple" />
+        <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+      </div>
+    `;
+
+      const detailedContent = `
+      <div class="save-wrapper">
+        <div class="share-header">
+          <h1 class="share-title">Vibe Animal Matcher</h1>
+          <p class="share-url">https://vibe-animal.vercel.app/</p>
+        </div>
+        <img src="${preview}" alt="Vibe" class="save-image" />
+        <div class="result-content">${fullParsedHtml}</div>
+      </div>
+    `;
+
+      const simpleContainer = createContainer(simpleContent, true);
+      document.body.appendChild(simpleContainer);
+
+      const simpleCanvas = await html2canvas(simpleContainer, {
+        scale: 2,
+        useCORS: true,
+        width: 800,
+        height: 800,
+      });
+
+      document.body.removeChild(simpleContainer);
+
+      const canvasToFile = (canvas, filename) => {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Canvas to Blob conversion failed."));
+                return;
+              }
+              const file = new File([blob], filename, { type: "image/png" });
+              resolve(file);
+            },
+            "image/png",
+            0.9
           );
+        });
+      };
 
-          if (resultBlob) {
-            const resultFile = new File(
-              [resultBlob],
-              `vibe-animal-result-${animalName
-                .replace(/\s+/g, "-")
-                .toLowerCase()}.png`,
-              { type: "image/png" }
-            );
-            filesToShare.push(resultFile);
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+
+      if (navigator.share && typeof navigator.share === "function") {
+        try {
+          const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
+          const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
+
+          if (
+            navigator.canShare &&
+            navigator.canShare({ files: [simpleFile] })
+          ) {
+            await navigator.share({
+              title: "AI Vibe Animal Matcher Result",
+              text: `Check out my vibe animal: ${animalName}${confettiEmoji}!`,
+              files: [simpleFile],
+            });
+          } else {
+            await navigator.share({
+              title: "AI Vibe Animal Matcher Result",
+              text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+            });
           }
         } catch (error) {
-          console.error("Error creating result screenshot:", error);
-        }
-      }
-
-      // 2. Add the original uploaded image
-      if (selectedFile) {
-        // Create a copy of the original file with a descriptive name
-        const originalImageFile = new File(
-          [selectedFile],
-          `original-photo-${animalName
-            .replace(/\s+/g, "-")
-            .toLowerCase()}.${selectedFile.name.split(".").pop()}`,
-          { type: selectedFile.type }
-        );
-        filesToShare.push(originalImageFile);
-      }
-
-      // 3. Create a combined image (optional - includes both images in one)
-      try {
-        const combinedCanvas = await createCombinedImage();
-        if (combinedCanvas) {
-          const combinedBlob = await new Promise((resolve) =>
-            combinedCanvas.toBlob(resolve, "image/png", 0.9)
-          );
-
-          if (combinedBlob) {
-            const combinedFile = new File(
-              [combinedBlob],
-              `vibe-animal-complete-${animalName
-                .replace(/\s+/g, "-")
-                .toLowerCase()}.png`,
-              { type: "image/png" }
-            );
-            filesToShare.push(combinedFile);
+          if (error.name !== "AbortError") {
+            if (isMobile) {
+              setError("Sharing not available on this device.");
+              setTimeout(() => setError(null), 3000);
+            }
           }
         }
-      } catch (error) {
-        console.error("Error creating combined image:", error);
-      }
-
-      // 4. Try native sharing with files
-      if (
-        navigator.canShare &&
-        filesToShare.length > 0 &&
-        navigator.canShare({ files: filesToShare })
-      ) {
-        await navigator.share({
-          title: "My Vibe Animal Result",
-          text: shareText,
-          files: filesToShare,
-        });
-      }
-      // 5. Fallback: Try sharing with just text
-      else if (navigator.share) {
-        await navigator.share({
-          title: "My Vibe Animal Result",
-          text: shareText,
-        });
-      }
-      // 6. Final fallback: Download files and copy text
-      else {
-        // Download all files
-        filesToShare.forEach((file, index) => {
-          const url = URL.createObjectURL(file);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = file.name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        });
-
-        // Copy text to clipboard
-        await navigator.clipboard.writeText(shareText);
-        alert(
-          `Images downloaded! Share text copied to clipboard: "${shareText}"`
-        );
+      } else {
+        setError("Sharing is not supported on this device or browser.");
+        setTimeout(() => setError(null), 3000);
       }
     } catch (error) {
-      console.error("Sharing error:", error);
-
-      // Emergency fallback - just copy text
-      try {
-        const animalName = extractAnimalName(result);
-        const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
-        await navigator.clipboard.writeText(shareText);
-        alert("Sharing failed, but text copied to clipboard!");
-      } catch (clipboardError) {
-        alert("Sharing failed. Please try again or share manually.");
-      }
+      console.error("Error saving result:", error);
+      setError("Failed to save result. Please try again.");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  /**
-   * Creates a combined image showing both the original photo and the result
-   */
-  const createCombinedImage = async () => {
-    try {
-      if (!preview || !resultRef.current) return null;
-
-      // Create canvas for the result
-      const resultCanvas = await html2canvas(resultRef.current, {
-        useCORS: true,
-        scale: 1.5,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-
-      // Create image element for original photo
-      const originalImg = new Image();
-      originalImg.crossOrigin = "anonymous";
-
-      return new Promise((resolve) => {
-        originalImg.onload = () => {
-          // Calculate dimensions
-          const padding = 20;
-          const maxWidth = 800;
-
-          // Scale original image to fit
-          const originalAspect = originalImg.width / originalImg.height;
-          const originalWidth = Math.min(
-            maxWidth / 2 - padding * 1.5,
-            originalImg.width
-          );
-          const originalHeight = originalWidth / originalAspect;
-
-          // Scale result to match
-          const resultAspect = resultCanvas.width / resultCanvas.height;
-          const resultWidth = Math.min(
-            maxWidth / 2 - padding * 1.5,
-            resultCanvas.width
-          );
-          const resultHeight = resultWidth / resultAspect;
-
-          // Create combined canvas
-          const combinedCanvas = document.createElement("canvas");
-          const ctx = combinedCanvas.getContext("2d");
-
-          combinedCanvas.width = maxWidth;
-          combinedCanvas.height =
-            Math.max(originalHeight, resultHeight) + padding * 3 + 40; // Extra space for title
-
-          // Fill background
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
-
-          // Add title
-          ctx.fillStyle = "#333333";
-          ctx.font = "bold 24px Arial, sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText("My Vibe Animal Result", maxWidth / 2, 30);
-
-          // Draw original image (left side)
-          ctx.drawImage(
-            originalImg,
-            padding,
-            50,
-            originalWidth,
-            originalHeight
-          );
-
-          // Draw result (right side)
-          ctx.drawImage(
-            resultCanvas,
-            maxWidth / 2 + padding / 2,
-            50,
-            resultWidth,
-            resultHeight
-          );
-
-          resolve(combinedCanvas);
-        };
-
-        originalImg.onerror = () => resolve(null);
-        originalImg.src = preview;
-      });
-    } catch (error) {
-      console.error("Error creating combined image:", error);
-      return null;
     }
   };
   return (
@@ -927,7 +856,7 @@ function App() {
             <div className="save-button-container">
               <button
                 className="btn btn-save"
-                onClick={shareResult}
+                onClick={saveResult}
                 disabled={isSaving}
               >
                 {isSaving ? "Sharing..." : "📤 Share Result"}
@@ -958,15 +887,6 @@ function App() {
         />
       )}
 
-      {/* Payment popup component */}
-      <PaymentPopup
-        isOpen={showPaymentPopup}
-        onClose={() => setShowPaymentPopup(false)}
-        onSuccess={handlePaymentSuccess}
-      />
-      {/* Sharing modal for enhanced sharing UX */}
-      {/* Removed SharingModal component */}
-
       <footer className="footer">
         <p>
           Powered by{" "}
@@ -978,6 +898,13 @@ function App() {
           </a>
         </p>
       </footer>
+
+      {/* Payment popup component */}
+      <PaymentPopup
+        isOpen={showPaymentPopup}
+        onClose={() => setShowPaymentPopup(false)}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }
