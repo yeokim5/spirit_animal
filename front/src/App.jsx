@@ -580,8 +580,7 @@ function App() {
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-        position: fixed;
-        top: -9999px; left: -9999px; width: 800px; height: 800px;
+        position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
         background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
         box-sizing: border-box; display: flex; flex-direction: column;
@@ -591,8 +590,7 @@ function App() {
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-        position: fixed;
-        top: -9999px; left: -9999px; width: 800px;
+        position: fixed; top: -9999px; left: -9999px; width: 800px;
         background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
         padding: 40px;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -624,7 +622,6 @@ function App() {
         container.prepend(styleTag);
         return container;
       };
-
       const simpleContent = `
     <div class="save-wrapper square">
       <div class="share-header">
@@ -635,20 +632,17 @@ function App() {
       <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
     </div>
   `;
-
       const simpleContainer = createContainer(simpleContent, true);
       document.body.appendChild(simpleContainer);
 
       // Add a slight pause before converting the canvas to help the DOM settle
       await new Promise((r) => setTimeout(r, 200));
-
       const simpleCanvas = await html2canvas(simpleContainer, {
         scale: 2,
         useCORS: true,
         width: 800,
         height: 800,
       });
-
       document.body.removeChild(simpleContainer);
 
       const canvasToFile = (canvas, filename) => {
@@ -668,15 +662,10 @@ function App() {
         });
       };
 
-      // Check if sharing is supported
-      if (!navigator.share || typeof navigator.share !== "function") {
-        setError("Sharing is not supported on this device or browser.");
-        return;
-      }
+      // *** BUG FIX: The check for navigator.share has been removed from here ***
 
       const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
       const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
-
       // Helper function to attempt sharing with file
       const attemptFileShare = async () => {
         return navigator.share({
@@ -698,12 +687,10 @@ function App() {
       // Try sharing with retries
       let shareSuccess = false;
       let lastError = null;
-
       // First, always try file sharing (your preferred method)
       for (let attempt = 1; attempt <= 3 && !shareSuccess; attempt++) {
         try {
           console.log(`Attempt ${attempt}: Trying file sharing...`);
-
           // Check if we can share files (re-check each time as it can be inconsistent)
           if (
             navigator.canShare &&
