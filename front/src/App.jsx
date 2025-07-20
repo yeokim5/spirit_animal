@@ -983,7 +983,15 @@ function App() {
       )}
 
       <footer className="footer">
-        <p>Powered by http://yeokim5.github.io/</p>
+        <p>
+          Powered by{" "}
+          <a
+            href="http://yeokim5.github.io/"
+            style={{ color: "blue", textDecoration: "none" }}
+          >
+            <strong>http://yeokim5.github.io/</strong>
+          </a>
+        </p>
       </footer>
 
       {/* Payment popup component */}
