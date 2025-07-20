@@ -103,7 +103,6 @@ const PaymentForm = ({ onSuccess, onCancel, isLoading, setIsLoading }) => {
                 color: "#9e2146",
               },
             },
-            paymentMethodOrder: ["card"],
             disableLink: true,
           }}
         />

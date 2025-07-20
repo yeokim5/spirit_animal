@@ -72,12 +72,6 @@ body {
   overflow: hidden;
 }
 
-.upload-area:hover {
-  border-color: #ffffff;
-  background: #f8f9ff;
-  transform: translateY(-2px);
-}
-
 .upload-area.has-preview {
   border-style: solid;
   padding: 0;
@@ -137,30 +131,6 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-}
-
-.preview-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.preview-container:hover .preview-overlay {
-  opacity: 1;
-}
-
-.preview-overlay p {
-  color: white;
-  font-weight: 600;
-  font-size: 1.1rem;
 }
 
 /* Buttons */
@@ -435,11 +405,15 @@ body {
   .button-group {
     flex-direction: column;
     align-items: center;
+    gap: 0.8rem;
   }
 
   .btn {
     width: 100%;
     max-width: 200px;
+    text-align: center;
+    word-wrap: break-word;
+    white-space: normal;
   }
 
   .preview-container {
@@ -483,6 +457,16 @@ body {
     line-height: 1.2;
   }
 
+  .button-group .btn {
+    width: 100%;
+    max-width: 180px;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+    text-align: center;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
   .preview-container {
     height: 200px;
   }
@@ -513,6 +497,16 @@ body {
     min-width: 120px;
     font-size: 0.8rem;
     padding: 8px 10px;
+  }
+
+  .button-group .btn {
+    width: 100%;
+    max-width: 160px;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    text-align: center;
+    word-wrap: break-word;
+    white-space: normal;
   }
 
   .result-content .animal_name {

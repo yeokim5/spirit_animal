@@ -793,9 +793,6 @@ function App() {
             {preview ? (
               <div className="preview-container">
                 <img src={preview} alt="Preview" className="preview-image" />
-                <div className="preview-overlay">
-                  <p>Click to change image</p>
-                </div>
               </div>
             ) : (
               <div className="upload-placeholder">
