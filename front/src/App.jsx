@@ -136,18 +136,18 @@ function App() {
    * @returns {string} The extracted animal name, or an empty string if not found.
    */
   const extractAnimalName = (response) => {
-    console.log("🔍 Extracting animal name from response:", response);
+    // console.log("🔍 Extracting animal name from response:", response);
 
     if (!response) {
-      console.log("❌ No response provided to extractAnimalName");
+      // console.log("❌ No response provided to extractAnimalName");
       return "";
     }
 
     const lines = response.split("\n");
-    console.log("📝 Response split into lines:", lines);
+    // console.log("📝 Response split into lines:", lines);
 
     const firstLine = lines[0]?.trim();
-    console.log("📝 First line:", firstLine);
+    // console.log("📝 First line:", firstLine);
 
     if (firstLine) {
       // Remove "animal: " or "**animal:**" or "Animal:" prefixes, and any remaining bold markers
@@ -158,11 +158,11 @@ function App() {
         .replace(/\*\*/g, "")
         .trim();
 
-      console.log("🦁 Extracted animal name:", cleanedName);
+      // console.log("🦁 Extracted animal name:", cleanedName);
       return cleanedName;
     }
 
-    console.log("❌ No first line found or first line is empty");
+    // console.log("❌ No first line found or first line is empty");
     return "";
   };
 
@@ -173,15 +173,15 @@ function App() {
    * @returns {string} The HTML string representing the parsed response.
    */
   const parseLLMResponse = (response) => {
-    console.log("🔧 Parsing LLM response:", response);
+    // console.log("🔧 Parsing LLM response:", response);
 
     if (!response) {
-      console.log("❌ No response provided to parseLLMResponse");
+      // console.log("❌ No response provided to parseLLMResponse");
       return "";
     }
 
     const lines = response.split("\n");
-    console.log("📝 Response split into lines for parsing:", lines);
+    // console.log("📝 Response split into lines for parsing:", lines);
 
     let html = '<div class="container">';
     let firstLineProcessed = false;
@@ -190,7 +190,7 @@ function App() {
       const line = lines[i];
       const trimmedLine = line.trim();
 
-      console.log(`🔍 Processing line ${i}: "${trimmedLine}"`);
+      // console.log(`🔍 Processing line ${i}: "${trimmedLine}"`);
 
       if (!trimmedLine) continue; // Skip empty lines
 
@@ -309,7 +309,7 @@ function App() {
     }
 
     html += "</div>";
-    console.log("🎨 Final parsed HTML:", html);
+    // console.log("🎨 Final parsed HTML:", html);
     return html;
   };
 
@@ -326,59 +326,59 @@ function App() {
 
   // Effect hook to trigger confetti animation when a new result is available
   useEffect(() => {
-    console.log("🎆 Confetti effect triggered with result:", result);
+    // console.log("🎆 Confetti effect triggered with result:", result);
 
     if (!result) {
-      console.log("❌ No result, turning off confetti");
+      // console.log("❌ No result, turning off confetti");
       setShowConfetti(false);
       setConfettiEmoji("");
       return;
     }
 
     const animalName = extractAnimalName(result);
-    console.log("🦁 Animal name for confetti:", animalName);
+    // console.log("🦁 Animal name for confetti:", animalName);
 
     if (!animalName) {
-      console.log("❌ No animal name found, no confetti");
+      // console.log("❌ No animal name found, no confetti");
       return;
     }
 
     const lowerCaseAnimalName = animalName.toLowerCase();
-    console.log("🔍 Looking for emoji for:", lowerCaseAnimalName);
+    // console.log("🔍 Looking for emoji for:", lowerCaseAnimalName);
 
     let foundEmoji = "";
 
     // 1. Try to find an exact match for the full animal name
     if (animalEmojiMap[lowerCaseAnimalName]) {
       foundEmoji = animalEmojiMap[lowerCaseAnimalName];
-      console.log("✅ Found exact emoji match:", foundEmoji);
+      // console.log("✅ Found exact emoji match:", foundEmoji);
     } else {
-      console.log("❌ No exact match, trying word splits");
+      // console.log("❌ No exact match, trying word splits");
       // 2. If no exact match, split the name into words and try to find a match for individual words
       const words = lowerCaseAnimalName.split(" ");
-      console.log("📝 Split words:", words);
+      // console.log("📝 Split words:", words);
 
       for (const word of words) {
         if (animalEmojiMap[word]) {
           foundEmoji = animalEmojiMap[word];
-          console.log("✅ Found emoji match for word:", word, "->", foundEmoji);
+          // console.log("✅ Found emoji match for word:", word, "->", foundEmoji);
           break;
         }
       }
     }
 
     if (foundEmoji) {
-      console.log("🎆 Setting confetti with emoji:", foundEmoji);
+      // console.log("🎆 Setting confetti with emoji:", foundEmoji);
       setConfettiEmoji(foundEmoji);
       setShowConfetti(true);
       // Automatically turn off confetti after some time
       const timer = setTimeout(() => {
-        console.log("⏰ Turning off confetti after 5 seconds");
+        // console.log("⏰ Turning off confetti after 5 seconds");
         setShowConfetti(false);
       }, 5000); // Confetti lasts for 5 seconds
       return () => clearTimeout(timer); // Cleanup timer on component unmount or result change
     } else {
-      console.log("❌ No emoji found, no confetti");
+      // console.log("❌ No emoji found, no confetti");
       setShowConfetti(false);
       setConfettiEmoji("");
     }
@@ -510,52 +510,52 @@ function App() {
     try {
       // Get API URL from environment variable or default to localhost
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      console.log("🌐 Making API request to:", `${apiUrl}/predict`);
-      console.log(
-        "📁 File being sent:",
-        selectedFile.name,
-        "Size:",
-        selectedFile.size,
-        "Type:",
-        selectedFile.type
-      );
+      // console.log("🌐 Making API request to:", `${apiUrl}/predict`);
+      // console.log(
+      //   "📁 File being sent:",
+      //   selectedFile.name,
+      //   "Size:",
+      //   selectedFile.size,
+      //   "Type:",
+      //   selectedFile.type
+      // );
 
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
         body: formData,
       });
 
-      console.log("📡 Response status:", response.status);
-      console.log(
-        "📡 Response headers:",
-        Object.fromEntries(response.headers.entries())
-      );
+      // console.log("📡 Response status:", response.status);
+      // console.log(
+      //   "📡 Response headers:",
+      //   Object.fromEntries(response.headers.entries())
+      // );
 
       const data = await response.json();
-      console.log("📦 Raw API response data:", data);
-      console.log("📦 Response data type:", typeof data);
-      console.log("📦 Response data keys:", Object.keys(data));
+      // console.log("📦 Raw API response data:", data);
+      // console.log("📦 Response data type:", typeof data);
+      // console.log("📦 Response data keys:", Object.keys(data));
 
       if (response.ok) {
-        console.log("✅ API call successful");
-        console.log("🎯 Result content:", data.result);
-        console.log("🎯 Result type:", typeof data.result);
-        console.log("🎯 Result length:", data.result ? data.result.length : 0);
+        // console.log("✅ API call successful");
+        // console.log("🎯 Result content:", data.result);
+        // console.log("🎯 Result type:", typeof data.result);
+        // console.log("🎯 Result length:", data.result ? data.result.length : 0);
 
         // Log the extracted animal name
         const animalName = extractAnimalName(data.result);
-        console.log("🦁 Extracted animal name:", animalName);
+        // console.log("🦁 Extracted animal name:", animalName);
 
         setResult(data.result); // Set the analysis result
       } else {
-        console.error("❌ API call failed");
-        console.error("❌ Error data:", data);
+        // console.error("❌ API call failed");
+        // console.error("❌ Error data:", data);
         setError(data.message || "Failed to analyze image"); // Display error message
       }
     } catch (err) {
-      console.error("💥 Network/API error:", err);
-      console.error("💥 Error message:", err.message);
-      console.error("💥 Error stack:", err.stack);
+      // console.error("💥 Network/API error:", err);
+      // console.error("💥 Error message:", err.message);
+      // console.error("💥 Error stack:", err.stack);
       setError("Network error. Please check if the backend server is running.");
     } finally {
       setIsLoading(false); // End loading state
@@ -637,7 +637,7 @@ function App() {
       setShareCanvas(canvas);
       setShowShareModal(true);
     } catch (error) {
-      console.error("Error creating shareable image:", error);
+      // console.error("Error creating shareable image:", error);
       setError("Failed to create shareable image. Please try again.");
     } finally {
       setIsSaving(false);

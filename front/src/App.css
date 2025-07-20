@@ -710,6 +710,21 @@ body {
   font-size: 2.2em;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@media (max-width: 600px) {
+  .header-emoji {
+    font-size: 1.5em;
+    line-height: 1.1;
+  }
+  .gradient-title {
+    font-size: 1.4em;
+    gap: 0.3em;
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 .wavy-underline {
