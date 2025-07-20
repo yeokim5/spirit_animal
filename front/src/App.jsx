@@ -564,53 +564,229 @@ function App() {
   };
 
   /**
-   * Generates and shares the result images.
-   * Optimized for mobile sharing with proper fallbacks.
+   * Enhanced sharing function that includes both the result image and original photo
+   * Works on mobile and desktop with proper fallbacks
    */
   const shareResult = async () => {
     if (!result || !preview) return;
+
     setIsSaving(true);
+
     try {
       const animalName = extractAnimalName(result);
       const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
-      // Try to create an image of the result section
-      let file = null;
-      if (resultRef.current && window.html2canvas) {
-        const canvas = await html2canvas(resultRef.current, {
-          useCORS: true,
-          scale: 2,
-        });
-        const blob = await new Promise((resolve) =>
-          canvas.toBlob(resolve, "image/png", 0.95)
-        );
-        if (blob) {
-          file = new File(
-            [blob],
-            `vibe-animal-${animalName.replace(/\s+/g, "-").toLowerCase()}.png`,
-            { type: "image/png" }
+
+      const filesToShare = [];
+
+      // 1. Create a screenshot of the result section
+      if (resultRef.current) {
+        try {
+          const canvas = await html2canvas(resultRef.current, {
+            useCORS: true,
+            scale: 2,
+            backgroundColor: "#ffffff",
+            logging: false,
+            allowTaint: true,
+            foreignObjectRendering: true,
+          });
+
+          const resultBlob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/png", 0.95)
           );
+
+          if (resultBlob) {
+            const resultFile = new File(
+              [resultBlob],
+              `vibe-animal-result-${animalName
+                .replace(/\s+/g, "-")
+                .toLowerCase()}.png`,
+              { type: "image/png" }
+            );
+            filesToShare.push(resultFile);
+          }
+        } catch (error) {
+          console.error("Error creating result screenshot:", error);
         }
       }
-      if (navigator.canShare && file && navigator.canShare({ files: [file] })) {
+
+      // 2. Add the original uploaded image
+      if (selectedFile) {
+        // Create a copy of the original file with a descriptive name
+        const originalImageFile = new File(
+          [selectedFile],
+          `original-photo-${animalName
+            .replace(/\s+/g, "-")
+            .toLowerCase()}.${selectedFile.name.split(".").pop()}`,
+          { type: selectedFile.type }
+        );
+        filesToShare.push(originalImageFile);
+      }
+
+      // 3. Create a combined image (optional - includes both images in one)
+      try {
+        const combinedCanvas = await createCombinedImage();
+        if (combinedCanvas) {
+          const combinedBlob = await new Promise((resolve) =>
+            combinedCanvas.toBlob(resolve, "image/png", 0.9)
+          );
+
+          if (combinedBlob) {
+            const combinedFile = new File(
+              [combinedBlob],
+              `vibe-animal-complete-${animalName
+                .replace(/\s+/g, "-")
+                .toLowerCase()}.png`,
+              { type: "image/png" }
+            );
+            filesToShare.push(combinedFile);
+          }
+        }
+      } catch (error) {
+        console.error("Error creating combined image:", error);
+      }
+
+      // 4. Try native sharing with files
+      if (
+        navigator.canShare &&
+        filesToShare.length > 0 &&
+        navigator.canShare({ files: filesToShare })
+      ) {
         await navigator.share({
           title: "My Vibe Animal Result",
           text: shareText,
-          files: [file],
+          files: filesToShare,
         });
-      } else if (navigator.share) {
+      }
+      // 5. Fallback: Try sharing with just text
+      else if (navigator.share) {
         await navigator.share({
           title: "My Vibe Animal Result",
           text: shareText,
         });
-      } else {
-        // fallback: copy text to clipboard
+      }
+      // 6. Final fallback: Download files and copy text
+      else {
+        // Download all files
+        filesToShare.forEach((file, index) => {
+          const url = URL.createObjectURL(file);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+
+        // Copy text to clipboard
         await navigator.clipboard.writeText(shareText);
-        alert("Share not supported, copied text to clipboard!");
+        alert(
+          `Images downloaded! Share text copied to clipboard: "${shareText}"`
+        );
       }
     } catch (error) {
-      alert("Sharing failed. Try again or copy manually.");
+      console.error("Sharing error:", error);
+
+      // Emergency fallback - just copy text
+      try {
+        const animalName = extractAnimalName(result);
+        const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
+        await navigator.clipboard.writeText(shareText);
+        alert("Sharing failed, but text copied to clipboard!");
+      } catch (clipboardError) {
+        alert("Sharing failed. Please try again or share manually.");
+      }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /**
+   * Creates a combined image showing both the original photo and the result
+   */
+  const createCombinedImage = async () => {
+    try {
+      if (!preview || !resultRef.current) return null;
+
+      // Create canvas for the result
+      const resultCanvas = await html2canvas(resultRef.current, {
+        useCORS: true,
+        scale: 1.5,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      // Create image element for original photo
+      const originalImg = new Image();
+      originalImg.crossOrigin = "anonymous";
+
+      return new Promise((resolve) => {
+        originalImg.onload = () => {
+          // Calculate dimensions
+          const padding = 20;
+          const maxWidth = 800;
+
+          // Scale original image to fit
+          const originalAspect = originalImg.width / originalImg.height;
+          const originalWidth = Math.min(
+            maxWidth / 2 - padding * 1.5,
+            originalImg.width
+          );
+          const originalHeight = originalWidth / originalAspect;
+
+          // Scale result to match
+          const resultAspect = resultCanvas.width / resultCanvas.height;
+          const resultWidth = Math.min(
+            maxWidth / 2 - padding * 1.5,
+            resultCanvas.width
+          );
+          const resultHeight = resultWidth / resultAspect;
+
+          // Create combined canvas
+          const combinedCanvas = document.createElement("canvas");
+          const ctx = combinedCanvas.getContext("2d");
+
+          combinedCanvas.width = maxWidth;
+          combinedCanvas.height =
+            Math.max(originalHeight, resultHeight) + padding * 3 + 40; // Extra space for title
+
+          // Fill background
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+
+          // Add title
+          ctx.fillStyle = "#333333";
+          ctx.font = "bold 24px Arial, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("My Vibe Animal Result", maxWidth / 2, 30);
+
+          // Draw original image (left side)
+          ctx.drawImage(
+            originalImg,
+            padding,
+            50,
+            originalWidth,
+            originalHeight
+          );
+
+          // Draw result (right side)
+          ctx.drawImage(
+            resultCanvas,
+            maxWidth / 2 + padding / 2,
+            50,
+            resultWidth,
+            resultHeight
+          );
+
+          resolve(combinedCanvas);
+        };
+
+        originalImg.onerror = () => resolve(null);
+        originalImg.src = preview;
+      });
+    } catch (error) {
+      console.error("Error creating combined image:", error);
+      return null;
     }
   };
   return (
