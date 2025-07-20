@@ -690,7 +690,7 @@ function App() {
           ) {
             await navigator.share({
               title: "AI Vibe Animal Matcher Result",
-              text: `Check out my vibe animal: ${animalName}${confettiEmoji}!`,
+              text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
               files: [simpleFile],
             });
           } else {
