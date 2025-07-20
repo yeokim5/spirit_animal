@@ -51,7 +51,7 @@ const SharingModal = ({
         showFeedback("✅ Image copied to clipboard!");
       } else {
         // Fallback: copy text
-        const text = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
+        const text = `I got ${animalName} ${confettiEmoji}!  Discover your vibe animal at https://vibe-animal.vercel.app/`;
         await navigator.clipboard.writeText(text);
         showFeedback("✅ Share text copied to clipboard!");
       }
@@ -64,8 +64,31 @@ const SharingModal = ({
 
   const shareViaWebAPI = async () => {
     try {
-      if (navigator.share) {
-        const text = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`;
+      if (navigator.canShare && window.ClipboardItem) {
+        // Convert canvas to blob
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], `vibe-animal-${animalName}.png`, {
+            type: "image/png",
+          });
+          const shareData = {
+            title: "My Vibe Animal Result",
+            text: `My vibe animal is ${animalName} ${confettiEmoji}! Discover your vibe animal too!`,
+            url: "https://vibe-animal.vercel.app/",
+            files: [file],
+          };
+
+          if (navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+            showFeedback("✅ Shared successfully!");
+          } else {
+            showFeedback(
+              "❌ Sharing image not supported on this device/browser."
+            );
+          }
+        }, "image/png");
+      } else if (navigator.share) {
+        // Fallback: share only text and url
+        const text = `My vibe animal is ${animalName} ${confettiEmoji}! Discover your vibe animal too!`;
         await navigator.share({
           title: "My Vibe Animal Result",
           text: text,
