@@ -674,32 +674,96 @@ function App() {
         return;
       }
 
-      try {
-        const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
-        const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
+      const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
+      const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
 
-        // Check if file sharing is supported
-        if (navigator.canShare && navigator.canShare({ files: [simpleFile] })) {
-          await navigator.share({
-            title: "AI Vibe Animal Matcher Result",
-            text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-            files: [simpleFile],
-          });
-        } else {
-          // Fallback to text-only sharing if file sharing isn't supported
-          await navigator.share({
-            title: "AI Vibe Animal Matcher Result",
-            text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-            url: "https://vibe-animal.vercel.app/",
-          });
+      // Helper function to attempt sharing with file
+      const attemptFileShare = async () => {
+        return navigator.share({
+          title: "AI Vibe Animal Matcher Result",
+          text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+          files: [simpleFile],
+        });
+      };
+
+      // Helper function for text-only fallback
+      const fallbackTextShare = async () => {
+        return navigator.share({
+          title: "AI Vibe Animal Matcher Result",
+          text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+          url: "https://vibe-animal.vercel.app/",
+        });
+      };
+
+      // Try sharing with retries
+      let shareSuccess = false;
+      let lastError = null;
+
+      // First, always try file sharing (your preferred method)
+      for (let attempt = 1; attempt <= 3 && !shareSuccess; attempt++) {
+        try {
+          console.log(`Attempt ${attempt}: Trying file sharing...`);
+
+          // Check if we can share files (re-check each time as it can be inconsistent)
+          if (
+            navigator.canShare &&
+            navigator.canShare({ files: [simpleFile] })
+          ) {
+            await attemptFileShare();
+            shareSuccess = true;
+            console.log(`File sharing succeeded on attempt ${attempt}`);
+            break;
+          } else {
+            console.log(
+              `Attempt ${attempt}: canShare returned false, trying anyway...`
+            );
+            // Sometimes canShare lies, so try anyway
+            await attemptFileShare();
+            shareSuccess = true;
+            console.log(
+              `File sharing succeeded on attempt ${attempt} (despite canShare being false)`
+            );
+            break;
+          }
+        } catch (shareError) {
+          console.log(`Attempt ${attempt} failed:`, shareError);
+          lastError = shareError;
+
+          // If user canceled, stop trying
+          if (shareError.name === "AbortError") {
+            console.log("User canceled sharing");
+            return; // Don't show error for user cancellation
+          }
+
+          // If not the last attempt, wait a bit before retrying
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
         }
-      } catch (shareError) {
-        // Only show error if it's not user cancellation
-        if (shareError.name !== "AbortError") {
-          console.error("Sharing failed:", shareError);
-          setError("Sharing failed. Please try again.");
+      }
+
+      // If file sharing failed after all attempts, try text-only sharing
+      if (!shareSuccess) {
+        try {
+          console.log("File sharing failed, trying text-only fallback...");
+          await fallbackTextShare();
+          shareSuccess = true;
+          console.log("Text-only sharing succeeded");
+        } catch (textShareError) {
+          console.log("Text-only sharing also failed:", textShareError);
+          lastError = textShareError;
+
+          // If user canceled, don't show error
+          if (textShareError.name === "AbortError") {
+            return;
+          }
         }
-        // If it's AbortError (user canceled), we don't show any error
+      }
+
+      // Only show error if nothing worked and it wasn't user cancellation
+      if (!shareSuccess && lastError && lastError.name !== "AbortError") {
+        console.error("All sharing attempts failed. Last error:", lastError);
+        setError("Sharing failed. Please try again.");
       }
     } catch (error) {
       console.error("Error preparing result for sharing:", error);
