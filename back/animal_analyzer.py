@@ -6,6 +6,112 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Define the available animals from the frontend dataset
+AVAILABLE_ANIMALS = {
+    # Mammals
+    'leopard', 'lion', 'tiger', 'elephant', 'panda', 'bear', 'koala', 'monkey', 'gorilla', 'orangutan',
+    'dog', 'poodle', 'wolf', 'fox', 'raccoon', 'cat', 'cow', 'ox', 'buffalo', 'pig', 'boar', 'goat',
+    'sheep', 'ram', 'deer', 'horse', 'zebra', 'giraffe', 'camel', 'llama', 'hippopotamus', 'rhinoceros',
+    'kangaroo', 'bat', 'mouse', 'rat', 'rabbit', 'chipmunk', 'hedgehog',
+    
+    # Birds
+    'chick', 'rooster', 'chicken', 'turkey', 'duck', 'swan', 'owl', 'eagle', 'dove', 'flamingo',
+    'peacock', 'parrot', 'penguin',
+    
+    # Aquatic
+    'fish', 'tropical_fish', 'blowfish', 'shark', 'dolphin', 'whale', 'seal', 'octopus', 'crab',
+    'lobster', 'shrimp', 'squid',
+    
+    # Insects & others
+    'snail', 'butterfly', 'bug', 'ant', 'honeybee', 'cricket', 'spider', 'scorpion', 'mosquito',
+    
+    # Reptiles & Amphibians
+    'turtle', 'crocodile', 'lizard', 'snake', 'frog',
+    
+    # Mythical
+    'dragon', 'unicorn',
+    
+    # Extinct
+    'dinosaur'
+}
+
+def normalize_animal_name(animal_name):
+    """
+    Normalize animal name to match the dataset exactly.
+    Returns the normalized name if found, otherwise returns None.
+    """
+    if not animal_name:
+        return None
+    
+    # Convert to lowercase and remove extra whitespace
+    normalized = animal_name.lower().strip()
+    
+    # Direct match
+    if normalized in AVAILABLE_ANIMALS:
+        return normalized
+    
+    # Handle common variations
+    variations = {
+        'tiger': ['tiger', 'tigers'],
+        'lion': ['lion', 'lions'],
+        'elephant': ['elephant', 'elephants'],
+        'bear': ['bear', 'bears', 'grizzly', 'polar_bear'],
+        'cat': ['cat', 'cats', 'kitten', 'kitty'],
+        'dog': ['dog', 'dogs', 'puppy', 'pup'],
+        'fox': ['fox', 'foxes'],
+        'wolf': ['wolf', 'wolves'],
+        'deer': ['deer', 'deers'],
+        'horse': ['horse', 'horses', 'pony'],
+        'bird': ['bird', 'birds'],
+        'fish': ['fish', 'fishes'],
+        'butterfly': ['butterfly', 'butterflies'],
+        'dragon': ['dragon', 'dragons'],
+        'unicorn': ['unicorn', 'unicorns'],
+        'dinosaur': ['dinosaur', 'dinosaurs', 't-rex', 'trex']
+    }
+    
+    for standard_name, variants in variations.items():
+        if normalized in variants and standard_name in AVAILABLE_ANIMALS:
+            return standard_name
+    
+    return None
+
+def extract_and_validate_animal(response_text):
+    """
+    Extract animal name from response and validate it against the dataset.
+    Returns (animal_name, is_valid, original_response)
+    """
+    if not response_text:
+        return None, False, response_text
+    
+    # Try to extract animal name from the response
+    lines = response_text.split('\n')
+    animal_name = None
+    
+    for line in lines:
+        line = line.strip()
+        # Look for patterns like "**animal:** lion" or "animal: lion"
+        if '**animal:**' in line.lower() or 'animal:' in line.lower():
+            # Extract the animal name after the colon
+            parts = line.split(':', 1)
+            if len(parts) > 1:
+                animal_name = parts[1].strip()
+                # Remove any remaining markdown formatting
+                animal_name = animal_name.replace('**', '').replace('*', '').strip()
+                break
+    
+    # If no structured format found, try to extract from first line
+    if not animal_name and lines:
+        first_line = lines[0].strip()
+        # Remove markdown formatting
+        first_line = first_line.replace('**', '').replace('*', '').strip()
+        animal_name = first_line
+    
+    # Normalize the animal name
+    normalized_name = normalize_animal_name(animal_name)
+    
+    return normalized_name, normalized_name is not None, response_text
+
 # --- CONFIGURATION ---
 # 1. SET YOUR IMAGE FILE PATH HERE
 IMAGE_PATH = "image/jang_no.jpg"
@@ -40,16 +146,37 @@ def analyze_animal(image_path: str):
     # --- 3. Define the Prompt ---
     # This prompt is designed to be punchy, fun, and directly lead to an entertaining spirit animal match.
 
-    prompt = """
+    # Format the available animals for the prompt
+    available_animals_text = """
+    MAMMALS: leopard, lion, tiger, elephant, panda, bear, koala, monkey, gorilla, orangutan, dog, poodle, wolf, fox, raccoon, cat, cow, ox, buffalo, pig, boar, goat, sheep, ram, deer, horse, zebra, giraffe, camel, llama, hippopotamus, rhinoceros, kangaroo, bat, mouse, rat, rabbit, chipmunk, hedgehog
+    
+    BIRDS: chick, rooster, chicken, turkey, duck, swan, owl, eagle, dove, flamingo, peacock, parrot, penguin
+    
+    AQUATIC: fish, tropical_fish, blowfish, shark, dolphin, whale, seal, octopus, crab, lobster, shrimp, squid
+    
+    INSECTS & OTHERS: snail, butterfly, bug, ant, honeybee, cricket, spider, scorpion, mosquito
+    
+    REPTILES & AMPHIBIANS: turtle, crocodile, lizard, snake, frog
+    
+    MYTHICAL: dragon, unicorn
+    
+    EXTINCT: dinosaur
+    """
+
+    prompt = f"""
 VIBE ANIMAL MATCH
 
-What animal best represents this energy and style? Explain why!
+What animal best represents this energy and style? You MUST choose from the following predefined animals only:
+
+{available_animals_text}
 
 Please respond in the following format:
 
-[ANIMAL]
-[Explanation of the vibe represented by the input]
-[With simplified bullet points, Connection of the vibe and visual elements to the chosen animal. Elaborate on why this animal *feels right* for this aesthetic.]
+**animal:** [ANIMAL_NAME_FROM_THE_LIST_ABOVE]
+**Explanation:** [Explanation of the vibe represented by the input]
+**Connection:** [With simplified bullet points, Connection of the vibe and visual elements to the chosen animal. Elaborate on why this animal *feels right* for this aesthetic.]
+
+IMPORTANT: You must choose an animal name that exactly matches one from the list above. Do not use variations or similar names.
 """
 
     # --- 4. Call the OpenAI API ---

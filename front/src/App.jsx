@@ -123,20 +123,33 @@ function App() {
    * @returns {string} The extracted animal name, or an empty string if not found.
    */
   const extractAnimalName = (response) => {
-    if (!response) return "";
+    console.log("🔍 Extracting animal name from response:", response);
+
+    if (!response) {
+      console.log("❌ No response provided to extractAnimalName");
+      return "";
+    }
 
     const lines = response.split("\n");
+    console.log("📝 Response split into lines:", lines);
+
     const firstLine = lines[0]?.trim();
+    console.log("📝 First line:", firstLine);
 
     if (firstLine) {
       // Remove "animal: " or "**animal:**" or "Animal:" prefixes, and any remaining bold markers
-      return firstLine
+      const cleanedName = firstLine
         .replace(/^\*\*?animal\s*:\s*\*\*?/i, "")
         .replace(/^animal\s*:\s*/i, "") // Added this line to handle "Animal:" or "animal:" without asterisks
+        .replace(/^animal:\s*:\s*/i, "") // Added this line to handle "Animal:" or "animal:" without asterisks
         .replace(/\*\*/g, "")
         .trim();
+
+      console.log("🦁 Extracted animal name:", cleanedName);
+      return cleanedName;
     }
 
+    console.log("❌ No first line found or first line is empty");
     return "";
   };
 
@@ -147,15 +160,24 @@ function App() {
    * @returns {string} The HTML string representing the parsed response.
    */
   const parseLLMResponse = (response) => {
-    if (!response) return "";
+    console.log("🔧 Parsing LLM response:", response);
+
+    if (!response) {
+      console.log("❌ No response provided to parseLLMResponse");
+      return "";
+    }
 
     const lines = response.split("\n");
+    console.log("📝 Response split into lines for parsing:", lines);
+
     let html = '<div class="container">';
     let firstLineProcessed = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const trimmedLine = line.trim();
+
+      console.log(`🔍 Processing line ${i}: "${trimmedLine}"`);
 
       if (!trimmedLine) continue; // Skip empty lines
 
@@ -175,12 +197,32 @@ function App() {
       // Handle specific headers like "Explanation" and "Connection"
       if (trimmedLine.startsWith("**") && trimmedLine.includes("Explanation")) {
         html += `<h2>Explanation</h2>`;
+        // Check if there's content after the colon on the same line
+        const colonIndex = trimmedLine.indexOf(":");
+        if (colonIndex !== -1 && colonIndex < trimmedLine.length - 1) {
+          const content = trimmedLine.substring(colonIndex + 1).trim();
+          if (content) {
+            // Clean the content by removing markdown formatting
+            const cleanedContent = content.replace(/\*\*/g, "").trim();
+            html += `<p>${cleanedContent}</p>`;
+          }
+        }
         continue;
       } else if (
         trimmedLine.startsWith("**") &&
         trimmedLine.includes("Connection")
       ) {
         html += `<h2>Connection</h2>`;
+        // Check if there's content after the colon on the same line
+        const colonIndex = trimmedLine.indexOf(":");
+        if (colonIndex !== -1 && colonIndex < trimmedLine.length - 1) {
+          const content = trimmedLine.substring(colonIndex + 1).trim();
+          if (content) {
+            // Clean the content by removing markdown formatting
+            const cleanedContent = content.replace(/\*\*/g, "").trim();
+            html += `<p>${cleanedContent}</p>`;
+          }
+        }
         continue;
       }
 
@@ -254,46 +296,65 @@ function App() {
     }
 
     html += "</div>";
+    console.log("🎨 Final parsed HTML:", html);
     return html;
   };
 
   // Effect hook to trigger confetti animation when a new result is available
   useEffect(() => {
+    console.log("🎆 Confetti effect triggered with result:", result);
+
     if (!result) {
+      console.log("❌ No result, turning off confetti");
       setShowConfetti(false);
       setConfettiEmoji("");
       return;
     }
 
     const animalName = extractAnimalName(result);
-    if (!animalName) return;
+    console.log("🦁 Animal name for confetti:", animalName);
+
+    if (!animalName) {
+      console.log("❌ No animal name found, no confetti");
+      return;
+    }
 
     const lowerCaseAnimalName = animalName.toLowerCase();
+    console.log("🔍 Looking for emoji for:", lowerCaseAnimalName);
+
     let foundEmoji = "";
 
     // 1. Try to find an exact match for the full animal name
     if (animalEmojiMap[lowerCaseAnimalName]) {
       foundEmoji = animalEmojiMap[lowerCaseAnimalName];
+      console.log("✅ Found exact emoji match:", foundEmoji);
     } else {
+      console.log("❌ No exact match, trying word splits");
       // 2. If no exact match, split the name into words and try to find a match for individual words
       const words = lowerCaseAnimalName.split(" ");
+      console.log("📝 Split words:", words);
+
       for (const word of words) {
         if (animalEmojiMap[word]) {
           foundEmoji = animalEmojiMap[word];
+          console.log("✅ Found emoji match for word:", word, "->", foundEmoji);
           break;
         }
       }
     }
 
     if (foundEmoji) {
+      console.log("🎆 Setting confetti with emoji:", foundEmoji);
       setConfettiEmoji(foundEmoji);
       setShowConfetti(true);
       // Automatically turn off confetti after some time
       const timer = setTimeout(() => {
+        console.log("⏰ Turning off confetti after 5 seconds");
         setShowConfetti(false);
       }, 5000); // Confetti lasts for 5 seconds
       return () => clearTimeout(timer); // Cleanup timer on component unmount or result change
     } else {
+      console.log("❌ No emoji found, no confetti");
       setShowConfetti(false);
       setConfettiEmoji("");
     }
@@ -381,17 +442,52 @@ function App() {
     try {
       // Get API URL from environment variable or default to localhost
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      console.log("🌐 Making API request to:", `${apiUrl}/predict`);
+      console.log(
+        "📁 File being sent:",
+        selectedFile.name,
+        "Size:",
+        selectedFile.size,
+        "Type:",
+        selectedFile.type
+      );
+
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
         body: formData,
       });
+
+      console.log("📡 Response status:", response.status);
+      console.log(
+        "📡 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       const data = await response.json();
+      console.log("📦 Raw API response data:", data);
+      console.log("📦 Response data type:", typeof data);
+      console.log("📦 Response data keys:", Object.keys(data));
+
       if (response.ok) {
+        console.log("✅ API call successful");
+        console.log("🎯 Result content:", data.result);
+        console.log("🎯 Result type:", typeof data.result);
+        console.log("🎯 Result length:", data.result ? data.result.length : 0);
+
+        // Log the extracted animal name
+        const animalName = extractAnimalName(data.result);
+        console.log("🦁 Extracted animal name:", animalName);
+
         setResult(data.result); // Set the analysis result
       } else {
+        console.error("❌ API call failed");
+        console.error("❌ Error data:", data);
         setError(data.message || "Failed to analyze image"); // Display error message
       }
     } catch (err) {
+      console.error("💥 Network/API error:", err);
+      console.error("💥 Error message:", err.message);
+      console.error("💥 Error stack:", err.stack);
       setError("Network error. Please check if the backend server is running.");
     } finally {
       setIsLoading(false); // End loading state
@@ -552,48 +648,127 @@ function App() {
         }, "image/png");
       };
 
-      // Helper to convert a canvas to a File object (No changes here)
+      // Helper to convert a canvas to a File object with better error handling
       const canvasToFile = (canvas, filename) => {
         return new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {
-            if (!blob) {
-              reject(new Error("Canvas to Blob conversion failed."));
-              return;
-            }
-            const file = new File([blob], filename, { type: "image/png" });
-            resolve(file);
-          }, "image/png");
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Canvas to Blob conversion failed."));
+                return;
+              }
+              console.log("📄 Created blob:", {
+                size: blob.size,
+                type: blob.type,
+              });
+              const file = new File([blob], filename, { type: "image/png" });
+              console.log("📁 Created file:", {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+              });
+              resolve(file);
+            },
+            "image/png",
+            0.9
+          ); // Added quality parameter for better compression
         });
       };
 
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      // Comprehensive mobile detection
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileUA =
+        /iphone|ipad|ipod|android|blackberry|windows phone/i.test(userAgent);
+      const isTouchDevice =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      const isStandalone = window.navigator.standalone === true;
+      const isPWA = window.matchMedia("(display-mode: standalone)").matches;
 
-      // *** MODIFIED LOGIC BEGINS HERE ***
+      // Consider it mobile if it has mobile UA OR (touch device AND small screen)
+      const isMobile = isMobileUA || (isTouchDevice && isSmallScreen);
+
+      console.log("📱 Mobile detection:", {
+        userAgent: userAgent.substring(0, 50) + "...",
+        isMobileUA,
+        isTouchDevice,
+        isSmallScreen,
+        isStandalone,
+        isPWA,
+        isMobile,
+        hasShare: !!navigator.share,
+        canShare: !!navigator.canShare,
+        windowWidth: window.innerWidth,
+        maxTouchPoints: navigator.maxTouchPoints,
+      });
 
       // Use Web Share API on mobile if available, sharing ONLY the simple image
-      if (isMobile && navigator.share) {
+      if (
+        isMobile &&
+        navigator.share &&
+        typeof navigator.share === "function"
+      ) {
         try {
           const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
           const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
 
-          // Check if the browser can share this single file
+          console.log(
+            "📤 Attempting to share file:",
+            simpleFile.name,
+            "Size:",
+            simpleFile.size
+          );
+
+          // Try sharing with files first
           if (
             navigator.canShare &&
             navigator.canShare({ files: [simpleFile] })
           ) {
+            console.log("✅ Can share files, attempting share...");
             await navigator.share({
               title: "Vibe Animal Matcher Result",
               text: "Check out my vibe animal!",
               files: [simpleFile],
             });
+            console.log("✅ Share successful!");
           } else {
-            // This is unlikely if navigator.share exists, but it's a safe fallback
-            throw new Error("Sharing this file is not supported.");
+            // Fallback: try sharing without files (just text and URL)
+            console.log("⚠️ Cannot share files, trying text-only share...");
+
+            // Try to create a data URL from the canvas for sharing
+            try {
+              const dataUrl = simpleCanvas.toDataURL("image/png", 0.9);
+              console.log(
+                "📊 Created data URL for sharing, length:",
+                dataUrl.length
+              );
+
+              await navigator.share({
+                title: "Vibe Animal Matcher Result",
+                text: "Check out my vibe animal! Visit https://vibe-animal.vercel.app/ to try it yourself!",
+                url: dataUrl, // Some browsers might support sharing data URLs
+              });
+              console.log("✅ Share with data URL successful!");
+            } catch (dataUrlError) {
+              console.log("⚠️ Data URL share failed, trying text-only...");
+              await navigator.share({
+                title: "Vibe Animal Matcher Result",
+                text: "Check out my vibe animal! Visit https://vibe-animal.vercel.app/ to try it yourself!",
+              });
+              console.log("✅ Text-only share successful!");
+            }
           }
         } catch (error) {
+          console.error("❌ Share failed:", error);
           // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
-            console.error("Share failed, falling back to download:", error);
+            console.log("🔄 Falling back to download due to share error");
+            // Show a user-friendly message about the fallback
+            setError(
+              "Sharing not available on this device. Downloading images instead."
+            );
+            setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+
             // Fallback to downloading both images if sharing fails
             downloadCanvas(
               simpleCanvas,
@@ -604,10 +779,11 @@ function App() {
               `vibe-animal-detailed-${Date.now()}.png`
             );
           } else {
-            console.log("Share action was cancelled by the user.");
+            console.log("✅ Share action was cancelled by the user.");
           }
         }
       } else {
+        console.log("🖥️ Desktop detected or no share API, downloading images");
         // Fallback for desktop: download both images
         downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
         downloadCanvas(

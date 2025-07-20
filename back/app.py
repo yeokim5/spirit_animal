@@ -214,11 +214,12 @@ def predict_path():
 def analyze_animal_api(image_path: str):
     """
     Modified version of analyze_animal that returns the result instead of printing
-    Retries up to 3 times if the response contains 'sorry'.
+    Retries up to 3 times if the response contains 'sorry' or if animal validation fails.
     """
     import base64
     from openai import OpenAI
     import time
+    from animal_analyzer import extract_and_validate_animal
 
     # Load API Key from environment variable
     api_key = os.getenv('OPENAI_API_KEY')
@@ -238,17 +239,38 @@ def analyze_animal_api(image_path: str):
     except Exception as e:
         return f"Error reading image: {e}"
     
+    # Define the available animals from the frontend dataset
+    available_animals = """
+    MAMMALS: leopard, lion, tiger, elephant, panda, bear, koala, monkey, gorilla, orangutan, dog, poodle, wolf, fox, raccoon, cat, cow, ox, buffalo, pig, boar, goat, sheep, ram, deer, horse, zebra, giraffe, camel, llama, hippopotamus, rhinoceros, kangaroo, bat, mouse, rat, rabbit, chipmunk, hedgehog
+    
+    BIRDS: chick, rooster, chicken, turkey, duck, swan, owl, eagle, dove, flamingo, peacock, parrot, penguin
+    
+    AQUATIC: fish, tropical_fish, blowfish, shark, dolphin, whale, seal, octopus, crab, lobster, shrimp, squid
+    
+    INSECTS & OTHERS: snail, butterfly, bug, ant, honeybee, cricket, spider, scorpion, mosquito
+    
+    REPTILES & AMPHIBIANS: turtle, crocodile, lizard, snake, frog
+    
+    MYTHICAL: dragon, unicorn
+    
+    EXTINCT: dinosaur
+    """
+
     # Define the prompt
-    prompt = """
+    prompt = f"""
 VIBE ANIMAL MATCH
 
-What animal best represents this energy and style? Explain why!
+What animal best represents this energy and style? You MUST choose from the following predefined animals only:
+
+{available_animals}
 
 Please respond in the following format:
 
-[ANIMAL]
-[Explanation of the vibe represented by the input]
-[With simplified bullet points, Connection of the vibe and visual elements to the chosen animal. Elaborate on why this animal *feels right* for this aesthetic.]
+**animal:** [ANIMAL_NAME_FROM_THE_LIST_ABOVE]
+**Explanation:** [Explanation of the vibe represented by the input]
+**Connection:** [With simplified bullet points, Connection of the vibe and visual elements to the chosen animal. Elaborate on why this animal *feels right* for this aesthetic.]
+
+IMPORTANT: You must choose an animal name that exactly matches one from the list above. Do not use variations or similar names.
 """
     
     last_response = None
@@ -274,13 +296,34 @@ Please respond in the following format:
             )
             result = response.choices[0].message.content
             last_response = result
-            if result and 'sorry' not in result.lower():
+            
+            # Validate the animal name from the response
+            animal_name, is_valid, _ = extract_and_validate_animal(result)
+            
+            # If response doesn't contain 'sorry' and animal is valid, return the result
+            if result and 'sorry' not in result.lower() and is_valid:
                 return result
             else:
                 time.sleep(1)  # Wait 1 second before retrying
         except Exception as e:
             last_response = f"Error calling OpenAI API: {e}"
             break  # Don't retry on API errors
+    
+    # If we get here, either all attempts failed or animal validation failed
+    # Return a fallback response with a default animal
+    if last_response and 'Error:' not in last_response:
+        # Try to extract and fix the animal name
+        animal_name, is_valid, original_response = extract_and_validate_animal(last_response)
+        if not is_valid and animal_name is None:
+            # If no valid animal found, use a default
+            fallback_response = f"""**animal:** cat
+**Explanation:** Based on the image analysis, this vibe represents a {animal_name or 'mysterious'} energy.
+**Connection:** 
+- The visual elements suggest a {animal_name or 'unique'} personality
+- This animal best captures the essence of the image
+- The connection reflects the overall aesthetic and mood"""
+            return fallback_response
+    
     return last_response
 
 if __name__ == '__main__':
