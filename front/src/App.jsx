@@ -562,8 +562,7 @@ function App() {
 
   /**
    * Generates and shares the result images.
-   * Always attempts to use the Web Share API first, regardless of device type.
-   * Falls back to downloading images if sharing is not available.
+   * Optimized for mobile sharing with proper fallbacks.
    */
   const saveResult = async () => {
     if (!result || !preview) return;
@@ -715,10 +714,12 @@ function App() {
         });
       };
 
-      // Always try to share first, regardless of device type
-      console.log("📤 Attempting to share on any device...");
-      console.log("📱 Share API available:", !!navigator.share);
-      console.log("📱 Can share check available:", !!navigator.canShare);
+      // Check if we're on a mobile device
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+      console.log("📱 Device type:", isMobile ? "Mobile" : "Desktop");
 
       // Try sharing with Web Share API if available
       if (navigator.share && typeof navigator.share === "function") {
@@ -733,7 +734,7 @@ function App() {
             simpleFile.size
           );
 
-          // Try sharing with files first
+          // Check if we can share files
           if (
             navigator.canShare &&
             navigator.canShare({ files: [simpleFile] })
@@ -741,56 +742,33 @@ function App() {
             console.log("✅ Can share files, attempting share...");
             await navigator.share({
               title: "Vibe Animal Matcher Result",
-              text: "Check out my vibe animal!",
+              text: `Check out my vibe animal: ${animalName}! 🦁`,
               files: [simpleFile],
             });
             console.log("✅ Share successful!");
           } else {
-            // Fallback: try sharing without files (just text and URL)
+            // Fallback: share text and URL
             console.log("⚠️ Cannot share files, trying text-only share...");
-
-            // Try to create a data URL from the canvas for sharing
-            try {
-              const dataUrl = simpleCanvas.toDataURL("image/png", 0.9);
-              console.log(
-                "📊 Created data URL for sharing, length:",
-                dataUrl.length
-              );
-
-              await navigator.share({
-                title: "Vibe Animal Matcher Result",
-                text: "Check out my vibe animal! Visit https://vibe-animal.vercel.app/ to try it yourself!",
-                url: dataUrl, // Some browsers might support sharing data URLs
-              });
-              console.log("✅ Share with data URL successful!");
-            } catch (dataUrlError) {
-              console.log("⚠️ Data URL share failed, trying text-only...");
-              await navigator.share({
-                title: "Vibe Animal Matcher Result",
-                text: "Check out my vibe animal! Visit https://vibe-animal.vercel.app/ to try it yourself!",
-              });
-              console.log("✅ Text-only share successful!");
-            }
+            await navigator.share({
+              title: "Vibe Animal Matcher Result",
+              text: `Check out my vibe animal: ${animalName}! 🦁 Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+            });
+            console.log("✅ Text-only share successful!");
           }
         } catch (error) {
           console.error("❌ Share failed:", error);
           // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
             console.log("🔄 Falling back to download due to share error");
-            // Show a user-friendly message about the fallback
-            setError(
-              "Sharing not available on this device. Downloading images as fallback."
-            );
-            setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
-
-            // Fallback to downloading both images if sharing fails
+            // On mobile, show a message about the fallback
+            if (isMobile) {
+              setError("Sharing not available. Downloading image as fallback.");
+              setTimeout(() => setError(null), 3000);
+            }
+            // Fallback to downloading the simple image
             downloadCanvas(
               simpleCanvas,
-              `vibe-animal-simple-${Date.now()}.png`
-            );
-            downloadCanvas(
-              detailedCanvas,
-              `vibe-animal-detailed-${Date.now()}.png`
+              `vibe-animal-result-${Date.now()}.png`
             );
           } else {
             console.log("✅ Share action was cancelled by the user.");
@@ -798,12 +776,17 @@ function App() {
         }
       } else {
         console.log("🔄 No share API available, falling back to download");
-        // Fallback: download both images if sharing is not available
-        downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
-        downloadCanvas(
-          detailedCanvas,
-          `vibe-animal-detailed-${Date.now()}.png`
-        );
+        // On desktop or when share API is not available, download both images
+        if (!isMobile) {
+          downloadCanvas(simpleCanvas, `vibe-animal-simple-${Date.now()}.png`);
+          downloadCanvas(
+            detailedCanvas,
+            `vibe-animal-detailed-${Date.now()}.png`
+          );
+        } else {
+          // On mobile without share API, download just the simple image
+          downloadCanvas(simpleCanvas, `vibe-animal-result-${Date.now()}.png`);
+        }
       }
     } catch (error) {
       console.error("Error saving result:", error);
@@ -906,27 +889,29 @@ function App() {
           </div>
         </div>
 
-        {/* Example Images Carousel */}
-        <div className="example-carousel-container">
-          <div className="example-carousel">
-            <div className="carousel-track">
-              {exampleImages.map((image, index) => (
-                <div
-                  key={index}
-                  className={`example-image-wrapper ${
-                    index === currentImageIndex ? "active" : ""
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Example ${index + 1}`}
-                    className="example-image"
-                  />
-                </div>
-              ))}
+        {/* Example Images Carousel - Only show when no result */}
+        {!result && (
+          <div className="example-carousel-container">
+            <div className="example-carousel">
+              <div className="carousel-track">
+                {exampleImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`example-image-wrapper ${
+                      index === currentImageIndex ? "active" : ""
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Example ${index + 1}`}
+                      className="example-image"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {error && (
           <div className="error-message">
