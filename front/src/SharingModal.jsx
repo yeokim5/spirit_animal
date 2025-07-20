@@ -18,6 +18,12 @@ const SharingModal = ({
     setTimeout(() => setFeedback(""), duration);
   };
 
+  // Detect if user is on mobile
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
   const downloadImage = () => {
     setIsDownloading(true);
     try {
@@ -26,10 +32,45 @@ const SharingModal = ({
         .toLowerCase()
         .replace(/\s+/g, "-")}-${Date.now()}.png`;
       link.href = canvas.toDataURL("image/png");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showFeedback("✅ Image downloaded successfully!");
+
+      // For mobile, we need to handle this differently
+      if (isMobile) {
+        // On mobile, open the image in a new tab so user can save it
+        const newWindow = window.open();
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>Save Your Vibe Animal</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                body { margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif; text-align: center; }
+                img { max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                .instructions { margin: 20px 0; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                h2 { color: #333; margin-bottom: 10px; }
+                p { color: #666; line-height: 1.5; }
+              </style>
+            </head>
+            <body>
+              <h2>Your Vibe Animal Result</h2>
+              <img src="${canvas.toDataURL(
+                "image/png"
+              )}" alt="Vibe Animal Result" />
+              <div class="instructions">
+                <p><strong>To save this image:</strong></p>
+                <p>📱 <strong>iPhone/iPad:</strong> Tap and hold the image → "Save to Photos"</p>
+                <p>🤖 <strong>Android:</strong> Tap and hold the image → "Download image"</p>
+              </div>
+            </body>
+          </html>
+        `);
+        showFeedback("📱 Image opened in new tab. Tap and hold to save!");
+      } else {
+        // Desktop download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showFeedback("✅ Image downloaded successfully!");
+      }
     } catch (error) {
       showFeedback("❌ Download failed. Please try again.");
     } finally {
@@ -40,23 +81,35 @@ const SharingModal = ({
   const copyToClipboard = async () => {
     setIsCopying(true);
     try {
-      const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png", 0.9)
-      );
-
-      if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
-        ]);
-        showFeedback("✅ Image copied to clipboard!");
-      } else {
-        // Fallback: copy text
-        const text = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
+      // For mobile, prioritize copying text since image clipboard is unreliable
+      if (isMobile) {
+        const text = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal at https://vibe-animal.vercel.app/`;
         await navigator.clipboard.writeText(text);
-        showFeedback("✅ Share text copied to clipboard!");
+        showFeedback("✅ Share text copied! Paste it anywhere to share.");
+      } else {
+        // Desktop: try to copy image first, fallback to text
+        try {
+          const blob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/png", 0.9)
+          );
+
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ "image/png": blob }),
+            ]);
+            showFeedback("✅ Image copied to clipboard!");
+          } else {
+            throw new Error("Clipboard API not supported");
+          }
+        } catch (clipboardError) {
+          // Fallback to text
+          const text = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal at https://vibe-animal.vercel.app/`;
+          await navigator.clipboard.writeText(text);
+          showFeedback("✅ Share text copied to clipboard!");
+        }
       }
     } catch (error) {
-      showFeedback("❌ Copy failed. Try downloading instead.");
+      showFeedback("❌ Copy failed. Try the share button instead.");
     } finally {
       setIsCopying(false);
     }
@@ -65,12 +118,44 @@ const SharingModal = ({
   const shareViaWebAPI = async () => {
     try {
       if (navigator.share) {
-        const text = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`;
-        await navigator.share({
+        const shareData = {
           title: "My Vibe Animal Result",
-          text: text,
+          text: `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`,
           url: "https://vibe-animal.vercel.app/",
-        });
+        };
+
+        // On mobile, try to share with image if supported
+        if (isMobile && navigator.canShare) {
+          try {
+            const blob = await new Promise((resolve) =>
+              canvas.toBlob(resolve, "image/png", 0.9)
+            );
+
+            const file = new File(
+              [blob],
+              `vibe-animal-${animalName
+                .toLowerCase()
+                .replace(/\s+/g, "-")}.png`,
+              { type: "image/png" }
+            );
+
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                ...shareData,
+                files: [file],
+              });
+              showFeedback("✅ Shared successfully!");
+              return;
+            }
+          } catch (fileShareError) {
+            console.log(
+              "File sharing not supported, falling back to URL sharing"
+            );
+          }
+        }
+
+        // Fallback to URL sharing
+        await navigator.share(shareData);
         showFeedback("✅ Shared successfully!");
       } else {
         showFeedback("❌ Sharing not supported on this browser.");
@@ -80,6 +165,32 @@ const SharingModal = ({
         showFeedback("❌ Sharing failed. Try copy or download instead.");
       }
     }
+  };
+
+  // Function to share to specific social media (for mobile)
+  const shareToSocial = (platform) => {
+    const text = encodeURIComponent(
+      `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`
+    );
+    const url = encodeURIComponent("https://vibe-animal.vercel.app/");
+
+    let shareUrl = "";
+    switch (platform) {
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+        break;
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
+        break;
+      case "whatsapp":
+        shareUrl = `https://api.whatsapp.com/send?text=${text}%20${url}`;
+        break;
+      default:
+        return;
+    }
+
+    window.open(shareUrl, "_blank", "width=600,height=400");
+    showFeedback("✅ Opened sharing page!");
   };
 
   return (
@@ -113,7 +224,7 @@ const SharingModal = ({
           <div className="sharing-options">
             {navigator.share && (
               <button className="share-btn primary" onClick={shareViaWebAPI}>
-                📱 Share Link
+                📱 Share
               </button>
             )}
 
@@ -122,7 +233,11 @@ const SharingModal = ({
               onClick={copyToClipboard}
               disabled={isCopying}
             >
-              {isCopying ? "⏳ Copying..." : "📋 Copy Image"}
+              {isCopying
+                ? "⏳ Copying..."
+                : isMobile
+                ? "📋 Copy Text"
+                : "📋 Copy Image"}
             </button>
 
             <button
@@ -130,8 +245,38 @@ const SharingModal = ({
               onClick={downloadImage}
               disabled={isDownloading}
             >
-              {isDownloading ? "⏳ Downloading..." : "💾 Download Image"}
+              {isDownloading
+                ? "⏳ Processing..."
+                : isMobile
+                ? "📱 Save Image"
+                : "💾 Download Image"}
             </button>
+
+            {isMobile && (
+              <div className="social-sharing">
+                <p className="social-title">Or share directly:</p>
+                <div className="social-buttons">
+                  <button
+                    className="social-btn whatsapp"
+                    onClick={() => shareToSocial("whatsapp")}
+                  >
+                    💬 WhatsApp
+                  </button>
+                  <button
+                    className="social-btn twitter"
+                    onClick={() => shareToSocial("twitter")}
+                  >
+                    🐦 Twitter
+                  </button>
+                  <button
+                    className="social-btn facebook"
+                    onClick={() => shareToSocial("facebook")}
+                  >
+                    📘 Facebook
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {feedback && <div className="feedback-message">{feedback}</div>}
@@ -141,15 +286,30 @@ const SharingModal = ({
               <strong>How to share:</strong>
             </p>
             <ul>
+              {navigator.share && (
+                <li>
+                  📱 <strong>Share:</strong> Opens your device's share menu
+                </li>
+              )}
               <li>
-                📱 <strong>Share Link:</strong> Opens your device's share menu
+                📋 <strong>Copy:</strong>{" "}
+                {isMobile
+                  ? "Copies text to paste in messages"
+                  : "Copies image or text to clipboard"}
               </li>
               <li>
-                📋 <strong>Copy:</strong> Copies image to paste in messages
+                {isMobile ? "📱" : "💾"}{" "}
+                <strong>{isMobile ? "Save Image" : "Download"}:</strong>{" "}
+                {isMobile
+                  ? "Opens image in new tab - tap and hold to save"
+                  : "Downloads image to your computer"}
               </li>
-              <li>
-                💾 <strong>Download:</strong> Saves image to your device
-              </li>
+              {isMobile && (
+                <li>
+                  💬 <strong>Direct Share:</strong> Share to WhatsApp, Twitter,
+                  or Facebook
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -270,6 +430,63 @@ const SharingModal = ({
           cursor: not-allowed;
         }
 
+        .social-sharing {
+          margin-top: 20px;
+          padding-top: 15px;
+          border-top: 1px solid #eee;
+        }
+
+        .social-title {
+          margin: 0 0 10px 0;
+          font-size: 14px;
+          color: #666;
+          text-align: center;
+        }
+
+        .social-buttons {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px;
+        }
+
+        .social-btn {
+          padding: 10px 8px;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+        }
+
+        .social-btn.whatsapp {
+          background: #25d366;
+          color: white;
+        }
+
+        .social-btn.whatsapp:hover {
+          background: #22c55e;
+        }
+
+        .social-btn.twitter {
+          background: #1da1f2;
+          color: white;
+        }
+
+        .social-btn.twitter:hover {
+          background: #1991db;
+        }
+
+        .social-btn.facebook {
+          background: #1877f2;
+          color: white;
+        }
+
+        .social-btn.facebook:hover {
+          background: #166fe5;
+        }
+
         .feedback-message {
           text-align: center;
           padding: 10px;
@@ -314,6 +531,15 @@ const SharingModal = ({
           .modal-header,
           .modal-content {
             padding: 15px;
+          }
+
+          .social-buttons {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+
+          .social-btn {
+            padding: 12px 10px;
           }
         }
       `}</style>
