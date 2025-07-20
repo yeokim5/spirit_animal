@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Confetti from "react-confetti";
 import PaymentPopup from "./PaymentPopup"; // Assuming this component exists
+import SharingModal from "./SharingModal"; // Import the new modal component
 import html2canvas from "html2canvas";
 import "./App.css"; // Keep existing CSS for the main app
 
@@ -31,6 +32,10 @@ function App() {
 
   // State for carousel
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // --- New state for the sharing modal ---
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCanvas, setShareCanvas] = useState(null);
 
   const animalEmojiMap = {
     // Mammals
@@ -561,11 +566,10 @@ function App() {
   };
 
   /**
-   * Generates and shares the result images.
-   * Optimized for mobile sharing with proper fallbacks.
+   * REWRITTEN: Generates a shareable image and opens the SharingModal.
    */
   const saveResult = async () => {
-    if (!result || !preview || isSaving) return; // Prevent multiple executions
+    if (!result || !preview || isSaving) return;
 
     setIsSaving(true);
     setError(null);
@@ -573,111 +577,45 @@ function App() {
     try {
       const animalName = extractAnimalName(result);
 
-      // Create a container to render the shareable image
-      const createContainer = (content) => {
-        const container = document.createElement("div");
-        container.style.cssText = `
-            position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
-            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
-            box-sizing: border-box; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; overflow: hidden;
-        `;
-        const styleTag = document.createElement("style");
-        styleTag.innerHTML = `
-            .save-wrapper { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-            .share-header { margin-bottom: 15px; }
-            .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-            .share-url { font-size: 2rem; color: #666; margin: 0; }
-            .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-            .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-        `;
-        container.innerHTML = content;
-        container.prepend(styleTag);
-        return container;
-      };
-
-      const simpleContent = `
-        <div class="save-wrapper">
-          <div class="share-header">
-            <h1 class="share-title">AI Vibe Animal Matcher</h1>
-            <p class="share-url">https://vibe-animal.vercel.app/</p>
-          </div>
-          <img src="${preview}" alt="Vibe" class="save-image-simple" />
-          <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
-        </div>
+      // 1. Create a hidden container to render the shareable image
+      const container = document.createElement("div");
+      container.style.cssText = `
+        position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
+        background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+        box-sizing: border-box; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; overflow: hidden;
       `;
 
-      const simpleContainer = createContainer(simpleContent);
-      document.body.appendChild(simpleContainer);
+      const simpleContent = `
+        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+          <div style="margin-bottom: 15px;">
+            <h1 style="font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0;">AI Vibe Animal Matcher</h1>
+            <p style="font-size: 2rem; color: #666; margin: 0;">vibe-animal.vercel.app</p>
+          </div>
+          <img src="${preview}" alt="Vibe" style="max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto;" />
+          <div style="font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px;">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+        </div>
+      `;
+      container.innerHTML = simpleContent;
+      document.body.appendChild(container);
 
-      await new Promise((r) => setTimeout(r, 200)); // Allow DOM to settle
-
-      const simpleCanvas = await html2canvas(simpleContainer, {
+      // 2. Convert the container to a canvas
+      const canvas = await html2canvas(container, {
         scale: 2,
         useCORS: true,
         width: 800,
         height: 800,
       });
 
-      document.body.removeChild(simpleContainer);
+      document.body.removeChild(container);
 
-      const simpleFile = await new Promise((resolve, reject) => {
-        simpleCanvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Canvas to Blob conversion failed."));
-              return;
-            }
-            resolve(
-              new File([blob], "vibe-animal-result.png", { type: "image/png" })
-            );
-          },
-          "image/png",
-          0.9
-        );
-      });
-
-      // --- Simplified Sharing Logic ---
-      try {
-        // Attempt 1: Share the image file first
-        console.log("Attempting to share with file...");
-        await navigator.share({
-          title: "AI Vibe Animal Matcher Result",
-          text: `I got ${animalName}${confettiEmoji}! Find your vibe animal here: https://vibe-animal.vercel.app/`,
-          files: [simpleFile],
-        });
-        console.log("File sharing was successful.");
-      } catch (err) {
-        // If user cancels, do nothing.
-        if (err.name === "AbortError") {
-          console.log("User canceled the share dialog.");
-          return;
-        }
-
-        console.log("File sharing failed, trying text fallback.", err);
-
-        // Attempt 2: Fallback to sharing text and URL
-        try {
-          await navigator.share({
-            title: "AI Vibe Animal Matcher Result",
-            text: `I got ${animalName}${confettiEmoji}! Find your vibe animal here: https://vibe-animal.vercel.app/`,
-            url: "https://vibe-animal.vercel.app/",
-          });
-          console.log("Text sharing was successful.");
-        } catch (fallbackErr) {
-          // If user cancels the fallback, also do nothing.
-          if (fallbackErr.name === "AbortError") {
-            console.log("User canceled the fallback share dialog.");
-            return;
-          }
-          console.error("All sharing methods failed.", fallbackErr);
-          setError("Sharing is not available on this device.");
-        }
-      }
+      // 3. Store the canvas in state and open the modal
+      setShareCanvas(canvas);
+      setShowShareModal(true);
     } catch (error) {
-      console.error("Error preparing result for sharing:", error);
-      setError("Failed to prepare the result for sharing.");
+      console.error("Error creating shareable image:", error);
+      setError("Failed to create shareable image. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -869,6 +807,17 @@ function App() {
         onClose={() => setShowPaymentPopup(false)}
         onSuccess={handlePaymentSuccess}
       />
+
+      {/* Render the new Sharing Modal */}
+      {showShareModal && (
+        <SharingModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          canvas={shareCanvas}
+          animalName={extractAnimalName(result)}
+          confettiEmoji={confettiEmoji}
+        />
+      )}
     </div>
   );
 }
