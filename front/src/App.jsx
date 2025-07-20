@@ -567,82 +567,27 @@ function App() {
    * Generates and shares the result images.
    * Optimized for mobile sharing with proper fallbacks.
    */
-  const saveResult = async () => {
+  const shareResult = async () => {
     if (!result || !preview) return;
-
     setIsSaving(true);
     try {
       const animalName = extractAnimalName(result);
-
-      // Helper function to create a styled container for rendering
-      const createContainer = (content) => {
-        const container = document.createElement("div");
-        container.style.cssText = `
-          position: fixed;
-          top: -9999px; left: -9999px; width: 800px; height: 800px;
-          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
-          box-sizing: border-box; display: flex; flex-direction: column;
-          justify-content: center; align-items: center;
-          overflow: hidden;
-        `;
-
-        const styleTag = document.createElement("style");
-        styleTag.innerHTML = `
-          .save-wrapper { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-          .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-          .share-header { margin-bottom: 15px; }
-          .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-          .share-url { font-size: 2rem; color: #666; margin: 0; }
-          .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-        `;
-
-        container.innerHTML = content;
-        container.prepend(styleTag);
-        return container;
+      const shareData = {
+        title: "My Vibe Animal Result",
+        text: `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`,
+        url: "https://vibe-animal.vercel.app/",
       };
-
-      const simpleContent = `
-        <div class="save-wrapper">
-          <div class="share-header">
-            <h1 class="share-title">AI Vibe Animal Matcher</h1>
-            <p class="share-url">https://vibe-animal.vercel.app/</p>
-          </div>
-          <img src="${preview}" alt="Vibe" class="save-image-simple" />
-          <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
-        </div>
-      `;
-
-      // Create and render the container
-      const container = createContainer(simpleContent);
-      document.body.appendChild(container);
-
-      let canvas;
-      try {
-        canvas = await html2canvas(container, {
-          scale: 2,
-          useCORS: true,
-          width: 800,
-          height: 800,
-        });
-      } catch (canvasError) {
-        console.error("Error generating canvas:", canvasError);
-        setError("Failed to generate image for sharing. Please try again.");
-        setTimeout(() => setError(null), 3000);
-        document.body.removeChild(container);
-        setIsSaving(false);
-        return;
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // fallback: copy text to clipboard
+        await navigator.clipboard.writeText(
+          `${shareData.text} ${shareData.url}`
+        );
+        alert("Share not supported, copied text to clipboard!");
       }
-
-      document.body.removeChild(container);
-
-      // Store the canvas and show the sharing modal
-      setGeneratedCanvas(canvas);
-      setShowSharingModal(true);
     } catch (error) {
-      console.error("Error in saveResult:", error);
-      setError("Failed to prepare sharing options. Please try again.");
-      setTimeout(() => setError(null), 3000);
+      alert("Sharing failed. Try again or copy manually.");
     } finally {
       setIsSaving(false);
     }
@@ -785,7 +730,7 @@ function App() {
             <div className="save-button-container">
               <button
                 className="btn btn-save"
-                onClick={saveResult}
+                onClick={shareResult}
                 disabled={isSaving}
               >
                 {isSaving ? "Sharing..." : "📤 Share Result"}
@@ -823,15 +768,7 @@ function App() {
         onSuccess={handlePaymentSuccess}
       />
       {/* Sharing modal for enhanced sharing UX */}
-      {showSharingModal && (
-        <SharingModal
-          isOpen={showSharingModal}
-          onClose={() => setShowSharingModal(false)}
-          canvas={generatedCanvas}
-          animalName={extractAnimalName(result)}
-          confettiEmoji={confettiEmoji}
-        />
-      )}
+      {/* Removed SharingModal component */}
 
       <footer className="footer">
         <p>
