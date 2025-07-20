@@ -714,16 +714,258 @@ function App() {
         });
       };
 
-      // Check if we're on a mobile device
+      // Check if we're on a mobile device and specifically iOS
       const isMobile =
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
           navigator.userAgent
         );
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform &&
+          navigator.platform.indexOf("Mac") !== -1 &&
+          navigator.maxTouchPoints > 1);
       console.log("📱 Device type:", isMobile ? "Mobile" : "Desktop");
+      console.log("🍎 iOS device:", isIOS);
+      console.log("🔧 Platform:", navigator.platform);
+      console.log("👆 Max touch points:", navigator.maxTouchPoints);
+
+      // Helper function to trigger download on iOS
+      const downloadForIOS = (canvas, filename) => {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Failed to create blob from canvas"));
+                return;
+              }
+
+              // For iOS, create a data URL instead of blob URL for better compatibility
+              const reader = new FileReader();
+              reader.onload = () => {
+                const dataUrl = reader.result;
+
+                // Create a temporary link element
+                const link = document.createElement("a");
+                link.href = dataUrl;
+                link.download = filename;
+                link.style.display = "none";
+
+                // Add to DOM, click, and cleanup
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                resolve();
+              };
+              reader.onerror = () => reject(new Error("Failed to read blob"));
+              reader.readAsDataURL(blob);
+            },
+            "image/png",
+            0.9
+          );
+        });
+      };
+
+      // Helper function for iOS-specific sharing
+      const shareForIOS = async (canvas, animalName) => {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(
+            async (blob) => {
+              if (!blob) {
+                reject(new Error("Failed to create blob from canvas"));
+                return;
+              }
+
+              try {
+                // Create a File object
+                const file = new File([blob], `vibe-animal-${animalName}.png`, {
+                  type: "image/png",
+                });
+
+                // Try to share with files first
+                if (
+                  navigator.canShare &&
+                  navigator.canShare({ files: [file] })
+                ) {
+                  await navigator.share({
+                    title: "Vibe Animal Matcher Result",
+                    text: `Check out my vibe animal: ${animalName}! 🦁`,
+                    files: [file],
+                  });
+                  resolve();
+                  return;
+                }
+
+                // Fallback to text-only sharing
+                await navigator.share({
+                  title: "Vibe Animal Matcher Result",
+                  text: `Check out my vibe animal: ${animalName}! 🦁 Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+                });
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            },
+            "image/png",
+            0.9
+          );
+        });
+      };
+
+      // Helper function to create a shareable image overlay for iOS
+      const createShareableImageOverlay = (canvas, animalName) => {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Failed to create blob from canvas"));
+                return;
+              }
+
+              const reader = new FileReader();
+              reader.onload = () => {
+                const dataUrl = reader.result;
+
+                // Create overlay container
+                const overlay = document.createElement("div");
+                overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                padding: 20px;
+              `;
+
+                // Create image container
+                const imageContainer = document.createElement("div");
+                imageContainer.style.cssText = `
+                max-width: 90%;
+                max-height: 80%;
+                background: white;
+                border-radius: 15px;
+                padding: 20px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+              `;
+
+                // Create image
+                const img = document.createElement("img");
+                img.src = dataUrl;
+                img.style.cssText = `
+                max-width: 100%;
+                max-height: 70vh;
+                border-radius: 10px;
+                margin-bottom: 15px;
+              `;
+
+                // Create instructions
+                const instructions = document.createElement("p");
+                instructions.textContent =
+                  "Long press the image above to save it to your Photos!";
+                instructions.style.cssText = `
+                color: #666;
+                font-size: 16px;
+                margin: 10px 0;
+              `;
+
+                // Create close button
+                const closeBtn = document.createElement("button");
+                closeBtn.textContent = "Close";
+                closeBtn.style.cssText = `
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 10px;
+              `;
+                closeBtn.onclick = () => {
+                  document.body.removeChild(overlay);
+                  resolve();
+                };
+
+                // Assemble overlay
+                imageContainer.appendChild(img);
+                imageContainer.appendChild(instructions);
+                imageContainer.appendChild(closeBtn);
+                overlay.appendChild(imageContainer);
+
+                // Add to DOM
+                document.body.appendChild(overlay);
+
+                // Auto-close after 10 seconds
+                setTimeout(() => {
+                  if (document.body.contains(overlay)) {
+                    document.body.removeChild(overlay);
+                    resolve();
+                  }
+                }, 10000);
+              };
+              reader.onerror = () => reject(new Error("Failed to read blob"));
+              reader.readAsDataURL(blob);
+            },
+            "image/png",
+            0.9
+          );
+        });
+      };
 
       // Try sharing with Web Share API if available
       if (navigator.share && typeof navigator.share === "function") {
         try {
+          // For iOS, use the specialized sharing function
+          if (isIOS) {
+            console.log("🍎 iOS detected, using specialized sharing...");
+            try {
+              await shareForIOS(simpleCanvas, animalName);
+              console.log("✅ iOS specialized share successful!");
+              return;
+            } catch (iosShareError) {
+              console.log(
+                "⚠️ iOS specialized share failed, trying download fallback..."
+              );
+              // Fallback to overlay for iOS
+              try {
+                await createShareableImageOverlay(simpleCanvas, animalName);
+                console.log("✅ iOS overlay fallback successful!");
+                return;
+              } catch (overlayError) {
+                console.error(
+                  "❌ iOS overlay fallback also failed:",
+                  overlayError
+                );
+                // Final fallback to download
+                try {
+                  await downloadForIOS(
+                    simpleCanvas,
+                    `vibe-animal-result-${Date.now()}.png`
+                  );
+                  console.log("✅ iOS download fallback successful!");
+                  setError(
+                    "Image saved to your Photos! You can now share it manually."
+                  );
+                  setTimeout(() => setError(null), 4000);
+                  return;
+                } catch (downloadError) {
+                  console.error(
+                    "❌ iOS download fallback also failed:",
+                    downloadError
+                  );
+                }
+              }
+            }
+          }
+
+          // For other devices, use the original sharing logic
           const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
           const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
 
@@ -757,12 +999,15 @@ function App() {
           }
         } catch (error) {
           console.error("❌ Share failed:", error);
+
           // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
-            // On mobile, show a message about the fallback
+            // Show appropriate error message
             if (isMobile) {
-              setError("Sharing not available on this device.");
-              setTimeout(() => setError(null), 3000);
+              setError(
+                "Sharing not available. Try taking a screenshot instead!"
+              );
+              setTimeout(() => setError(null), 4000);
             }
           } else {
             console.log("✅ Share action was cancelled by the user.");
@@ -770,8 +1015,36 @@ function App() {
         }
       } else {
         console.log("❌ No share API available on this device.");
-        setError("Sharing is not supported on this device or browser.");
-        setTimeout(() => setError(null), 3000);
+
+        // For iOS without share API, try overlay first, then download
+        if (isIOS) {
+          console.log("🍎 iOS without share API, attempting overlay...");
+          try {
+            await createShareableImageOverlay(simpleCanvas, animalName);
+            console.log("✅ iOS overlay successful!");
+            return;
+          } catch (overlayError) {
+            console.error("❌ iOS overlay failed:", overlayError);
+            // Fallback to download
+            try {
+              await downloadForIOS(
+                simpleCanvas,
+                `vibe-animal-result-${Date.now()}.png`
+              );
+              console.log("✅ iOS download successful!");
+              setError(
+                "Image saved to your Photos! You can now share it manually."
+              );
+              setTimeout(() => setError(null), 4000);
+              return;
+            } catch (downloadError) {
+              console.error("❌ iOS download failed:", downloadError);
+            }
+          }
+        }
+
+        setError("Sharing is not supported. Try taking a screenshot instead!");
+        setTimeout(() => setError(null), 4000);
       }
     } catch (error) {
       console.error("Error saving result:", error);
@@ -784,10 +1057,8 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>Vibe Animal Matcher</h1>
-        <p>
-          Upload an image to discover what animal best represents your vibe!
-        </p>
+        <h1>AI Vibe Animal Matcher</h1>
+        <p>Let AI to discover what animal best represents your vibe!</p>
       </header>
 
       <main className="main">
@@ -875,7 +1146,7 @@ function App() {
         </div>
 
         {/* Example Images Carousel - Only show when no result */}
-        {!result && (
+        {!result && !isLoading && (
           <div className="example-carousel-container">
             <div className="example-carousel">
               <div className="carousel-track">
