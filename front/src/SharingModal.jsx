@@ -136,11 +136,11 @@ const SharingModal = ({
           <div className="sharing-options">
             {navigator.share && (
               <button className="share-btn primary" onClick={shareViaWebAPI}>
-                📱 Share Link
+                Share
               </button>
             )}
 
-            <button
+            {/* <button
               className="share-btn secondary"
               onClick={copyToClipboard}
               disabled={isCopying}
@@ -154,11 +154,11 @@ const SharingModal = ({
               disabled={isDownloading}
             >
               {isDownloading ? "⏳ Downloading..." : "💾 Download Image"}
-            </button>
+            </button> */}
           </div>
 
           {feedback && <div className="feedback-message">{feedback}</div>}
-
+          {/* 
           <div className="share-instructions">
             <p>
               <strong>How to share:</strong>
@@ -174,7 +174,7 @@ const SharingModal = ({
                 💾 <strong>Download:</strong> Saves image to your device
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
       </div>
 
