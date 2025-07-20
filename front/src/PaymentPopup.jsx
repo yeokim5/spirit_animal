@@ -37,11 +37,9 @@ const PaymentForm = ({ onSuccess, onCancel, isLoading, setIsLoading }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: 50, // 50 cents
+          amount: 99, // 99 cents
           currency: "usd",
-          product_id:
-            import.meta.env.VITE_STRIPE_CREDIT_PRODUCT_ID ||
-            "prod_ShqkCJ76rINAnj",
+          product_id: import.meta.env.VITE_STRIPE_CREDIT_PRODUCT_ID,
         }),
       });
 
@@ -73,13 +71,13 @@ const PaymentForm = ({ onSuccess, onCancel, isLoading, setIsLoading }) => {
         <h2>🔒 Payment Required</h2>
         <p>
           To unlock this feature and support our website, please consider a
-          small contribution of <strong>50 cents.</strong>
+          small contribution of <strong>99 cents.</strong>
         </p>
       </div>
 
       <div className="payment-details">
         <div className="amount-display">
-          <span className="amount">$0.50</span>
+          <span className="amount">$0.99</span>
           <span className="currency">USD</span>
         </div>
         <p className="payment-description">
@@ -120,7 +118,7 @@ const PaymentForm = ({ onSuccess, onCancel, isLoading, setIsLoading }) => {
           className="btn btn-primary"
           disabled={!stripe || isLoading}
         >
-          {isLoading ? "Processing..." : "Pay $0.50"}
+          {isLoading ? "Processing..." : "Pay $0.99"}
         </button>
         <button
           type="button"

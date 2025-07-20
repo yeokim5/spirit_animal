@@ -455,11 +455,38 @@ function App() {
   };
 
   /**
+   * Checks if the backend server is reachable.
+   * Returns true if backend is up, false otherwise.
+   */
+  const checkBackendHealth = async () => {
+    try {
+      // Use a lightweight endpoint; fallback to /predict with OPTIONS if no /health
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/predict`, {
+        method: "OPTIONS",
+      });
+      return response.ok;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  /**
    * Initiates the image analysis process. Checks for file selection and payment status.
    */
   const handleSubmit = async () => {
     if (!selectedFile) {
       setError("Please select an image first");
+      return;
+    }
+
+    // Check if backend is up before proceeding
+    setIsLoading(true);
+    setError(null);
+    const backendOk = await checkBackendHealth();
+    setIsLoading(false);
+    if (!backendOk) {
+      setError("The server is not working right now. Please try again later.");
       return;
     }
 
@@ -624,7 +651,10 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>AI Vibe Animal Matcher</h1>
-        <p>Let AI to discover what animal best represents your vibe!</p>
+        <h2>
+          It uses the most advanced AI <br /> to discover what animal best
+          represents your vibe!
+        </h2>
       </header>
 
       <main className="main">
