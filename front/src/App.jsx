@@ -3,6 +3,7 @@ import Confetti from "react-confetti";
 import PaymentPopup from "./PaymentPopup"; // Assuming this component exists
 import html2canvas from "html2canvas";
 import "./App.css"; // Keep existing CSS for the main app
+import SharingModal from "./SharingModal";
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -19,6 +20,8 @@ function App() {
   const [confettiEmoji, setConfettiEmoji] = useState("");
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
+  const [showSharingModal, setShowSharingModal] = useState(false);
+  const [generatedCanvas, setGeneratedCanvas] = useState(null);
 
   // Example images for the carousel
   const exampleImages = [
@@ -570,14 +573,11 @@ function App() {
     setIsSaving(true);
     try {
       const animalName = extractAnimalName(result);
-      const fullParsedHtml = parseLLMResponse(result);
 
       // Helper function to create a styled container for rendering
-      const createContainer = (content, isSimple = false) => {
+      const createContainer = (content) => {
         const container = document.createElement("div");
-        if (isSimple) {
-          // Square format for simple view
-          container.style.cssText = `
+        container.style.cssText = `
           position: fixed;
           top: -9999px; left: -9999px; width: 800px; height: 800px;
           background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
@@ -586,37 +586,16 @@ function App() {
           justify-content: center; align-items: center;
           overflow: hidden;
         `;
-        } else {
-          // Original rectangular format for detailed view
-          container.style.cssText = `
-          position: fixed;
-          top: -9999px; left: -9999px; width: 800px;
-          background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-          padding: 40px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          color: #333; box-sizing: border-box;
-        `;
-        }
 
         const styleTag = document.createElement("style");
         styleTag.innerHTML = `
-        .save-wrapper { width: 100%; text-align: center; }
-        .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-        .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-        .share-header { margin-bottom: 15px; }
-        .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-        .share-url { font-size: 2rem; color: #666; margin: 0; }
-        .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-        .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
-        .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
-        .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
-        .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
-        .result-content li { margin-bottom: 1rem; color: #555; }
-        .result-content li strong { color: #667eea; font-weight: 600; }
-        .result-content .container { max-width: 100%; }
-        .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-      `;
+          .save-wrapper { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+          .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
+          .share-header { margin-bottom: 15px; }
+          .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
+          .share-url { font-size: 2rem; color: #666; margin: 0; }
+          .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+        `;
 
         container.innerHTML = content;
         container.prepend(styleTag);
@@ -624,34 +603,23 @@ function App() {
       };
 
       const simpleContent = `
-      <div class="save-wrapper square">
-        <div class="share-header">
-          <h1 class="share-title">Vibe Animal Matcher</h1>
-          <p class="share-url">https://vibe-animal.vercel.app/</p>
+        <div class="save-wrapper">
+          <div class="share-header">
+            <h1 class="share-title">AI Vibe Animal Matcher</h1>
+            <p class="share-url">https://vibe-animal.vercel.app/</p>
+          </div>
+          <img src="${preview}" alt="Vibe" class="save-image-simple" />
+          <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
         </div>
-        <img src="${preview}" alt="Vibe" class="save-image-simple" />
-        <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
-      </div>
-    `;
+      `;
 
-      const detailedContent = `
-      <div class="save-wrapper">
-        <div class="share-header">
-          <h1 class="share-title">Vibe Animal Matcher</h1>
-          <p class="share-url">https://vibe-animal.vercel.app/</p>
-        </div>
-        <img src="${preview}" alt="Vibe" class="save-image" />
-        <div class="result-content">${fullParsedHtml}</div>
-      </div>
-    `;
+      // Create and render the container
+      const container = createContainer(simpleContent);
+      document.body.appendChild(container);
 
-      // Render the simple version for sharing
-      const simpleContainer = createContainer(simpleContent, true);
-      document.body.appendChild(simpleContainer);
-
-      let simpleCanvas;
+      let canvas;
       try {
-        simpleCanvas = await html2canvas(simpleContainer, {
+        canvas = await html2canvas(container, {
           scale: 2,
           useCORS: true,
           width: 800,
@@ -661,88 +629,19 @@ function App() {
         console.error("Error generating canvas:", canvasError);
         setError("Failed to generate image for sharing. Please try again.");
         setTimeout(() => setError(null), 3000);
-        document.body.removeChild(simpleContainer);
+        document.body.removeChild(container);
         setIsSaving(false);
         return;
       }
 
-      document.body.removeChild(simpleContainer);
+      document.body.removeChild(container);
 
-      const canvasToFile = (canvas, filename) => {
-        return new Promise((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Canvas to Blob conversion failed."));
-                return;
-              }
-              const file = new File([blob], filename, { type: "image/png" });
-              resolve(file);
-            },
-            "image/png",
-            0.9
-          );
-        });
-      };
-
-      const isMobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        );
-
-      if (navigator.share) {
-        // Check if navigator.share API is available
-        try {
-          const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
-          const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
-
-          // Check if the device can share files
-          if (
-            navigator.canShare &&
-            navigator.canShare({ files: [simpleFile] })
-          ) {
-            console.log("Attempting to share file via Web Share API.");
-            await navigator.share({
-              title: "Vibe Animal Matcher Result",
-              text: `Check out my vibe animal: ${animalName}! 🦁`,
-              files: [simpleFile],
-            });
-            console.log("Share successful (with file).");
-          } else {
-            console.log(
-              "File sharing not supported, falling back to text/URL sharing."
-            );
-            await navigator.share({
-              title: "Vibe Animal Matcher Result",
-              text: `Check out my vibe animal: ${animalName}! 🦁 Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-            });
-            console.log("Share successful (text/URL only).");
-          }
-        } catch (error) {
-          if (error.name === "AbortError") {
-            console.log("Share operation aborted by user.");
-          } else {
-            console.error("Error during sharing:", error);
-            console.error("Error name:", error.name);
-            console.error("Error message:", error.message);
-            if (isMobile) {
-              setError(`Sharing failed: ${error.message || "Unknown error"}.`);
-            } else {
-              setError("Sharing failed. Please try again.");
-            }
-            setTimeout(() => setError(null), 3000);
-          }
-        }
-      } else {
-        console.log("Web Share API is not supported on this device/browser.");
-        setError("Sharing is not supported on this device or browser.");
-        setTimeout(() => setError(null), 3000);
-      }
+      // Store the canvas and show the sharing modal
+      setGeneratedCanvas(canvas);
+      setShowSharingModal(true);
     } catch (error) {
-      console.error("Overall error in saveResult:", error);
-      setError(
-        "An unexpected error occurred during sharing. Please try again."
-      );
+      console.error("Error in saveResult:", error);
+      setError("Failed to prepare sharing options. Please try again.");
       setTimeout(() => setError(null), 3000);
     } finally {
       setIsSaving(false);
@@ -917,6 +816,23 @@ function App() {
         />
       )}
 
+      {/* Payment popup component */}
+      <PaymentPopup
+        isOpen={showPaymentPopup}
+        onClose={() => setShowPaymentPopup(false)}
+        onSuccess={handlePaymentSuccess}
+      />
+      {/* Sharing modal for enhanced sharing UX */}
+      {showSharingModal && (
+        <SharingModal
+          isOpen={showSharingModal}
+          onClose={() => setShowSharingModal(false)}
+          canvas={generatedCanvas}
+          animalName={extractAnimalName(result)}
+          confettiEmoji={confettiEmoji}
+        />
+      )}
+
       <footer className="footer">
         <p>
           Powered by{" "}
@@ -928,13 +844,6 @@ function App() {
           </a>
         </p>
       </footer>
-
-      {/* Payment popup component */}
-      <PaymentPopup
-        isOpen={showPaymentPopup}
-        onClose={() => setShowPaymentPopup(false)}
-        onSuccess={handlePaymentSuccess}
-      />
     </div>
   );
 }
