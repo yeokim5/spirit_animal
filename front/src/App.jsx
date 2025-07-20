@@ -565,196 +565,119 @@ function App() {
    * Optimized for mobile sharing with proper fallbacks.
    */
   const saveResult = async () => {
-    if (!result || !preview || isSaving) return; // Prevent multiple simultaneous executions
+    if (!result || !preview || isSaving) return; // Prevent multiple executions
 
     setIsSaving(true);
-    setError(null); // Clear any existing errors at the start
+    setError(null);
 
     try {
       const animalName = extractAnimalName(result);
-      const fullParsedHtml = parseLLMResponse(result);
 
-      // Helper function to create a styled container for rendering
-      const createContainer = (content, isSimple = false) => {
+      // Create a container to render the shareable image
+      const createContainer = (content) => {
         const container = document.createElement("div");
-        if (isSimple) {
-          // Square format for simple view
-          container.style.cssText = `
-        position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
-        background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
-        box-sizing: border-box; display: flex; flex-direction: column;
-        justify-content: center; align-items: center;
-        overflow: hidden;
-      `;
-        } else {
-          // Original rectangular format for detailed view
-          container.style.cssText = `
-        position: fixed; top: -9999px; left: -9999px; width: 800px;
-        background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-        padding: 40px;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        color: #333; box-sizing: border-box;
-      `;
-        }
-
+        container.style.cssText = `
+            position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
+            background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
+            box-sizing: border-box; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; overflow: hidden;
+        `;
         const styleTag = document.createElement("style");
         styleTag.innerHTML = `
-      .save-wrapper { width: 100%; text-align: center; }
-      .save-wrapper.square { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-      .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
-      .save-image { max-width: 50%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 20px auto; }
-      .share-header { margin-bottom: 15px; }
-      .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
-      .share-url { font-size: 2rem; color: #666; margin: 0; }
-      .result-content { background: white; border-radius: 15px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
-      .result-content .animal_name { color: #5a4830; font-size: 2.5rem; font-weight: 700; text-align: center; margin-bottom: 2rem; text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2); }
-      .result-content h2 { text-align: left; color: #333; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #667eea; padding-bottom: 0.5rem; }
-      .result-content p { text-align: left; margin-bottom: 1rem; color: #555; }
-      .result-content ul { text-align: left; margin: 1rem 0; padding-left: 1.5rem; }
-      .result-content li { margin-bottom: 1rem; color: #555; }
-      .result-content li strong { color: #667eea; font-weight: 600; }
-      .result-content .container { max-width: 100%; }
-      .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
-    `;
-
+            .save-wrapper { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+            .share-header { margin-bottom: 15px; }
+            .share-title { font-size: 3rem; font-weight: 700; color: #333; margin: 0 0 5px 0; }
+            .share-url { font-size: 2rem; color: #666; margin: 0; }
+            .save-image-simple { max-width: 450px; max-height: 450px; width: auto; height: auto; object-fit: contain; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin: 15px auto; }
+            .simple-animal-name { font-size: 2.2em; font-weight: bold; color: #333; text-align: center; padding: 15px; margin-top: 10px; }
+        `;
         container.innerHTML = content;
         container.prepend(styleTag);
         return container;
       };
+
       const simpleContent = `
-    <div class="save-wrapper square">
-      <div class="share-header">
-        <h1 class="share-title">AI Vibe Animal Matcher</h1>
-        <p class="share-url">https://vibe-animal.vercel.app/</p>
-      </div>
-      <img src="${preview}" alt="Vibe" class="save-image-simple" />
-      <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
-    </div>
-  `;
-      const simpleContainer = createContainer(simpleContent, true);
+        <div class="save-wrapper">
+          <div class="share-header">
+            <h1 class="share-title">AI Vibe Animal Matcher</h1>
+            <p class="share-url">https://vibe-animal.vercel.app/</p>
+          </div>
+          <img src="${preview}" alt="Vibe" class="save-image-simple" />
+          <div class="simple-animal-name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>
+        </div>
+      `;
+
+      const simpleContainer = createContainer(simpleContent);
       document.body.appendChild(simpleContainer);
 
-      // Add a slight pause before converting the canvas to help the DOM settle
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 200)); // Allow DOM to settle
+
       const simpleCanvas = await html2canvas(simpleContainer, {
         scale: 2,
         useCORS: true,
         width: 800,
         height: 800,
       });
+
       document.body.removeChild(simpleContainer);
 
-      const canvasToFile = (canvas, filename) => {
-        return new Promise((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Canvas to Blob conversion failed."));
-                return;
-              }
-              const file = new File([blob], filename, { type: "image/png" });
-              resolve(file);
-            },
-            "image/png",
-            0.9
-          );
-        });
-      };
+      const simpleFile = await new Promise((resolve, reject) => {
+        simpleCanvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Canvas to Blob conversion failed."));
+              return;
+            }
+            resolve(
+              new File([blob], "vibe-animal-result.png", { type: "image/png" })
+            );
+          },
+          "image/png",
+          0.9
+        );
+      });
 
-      // *** BUG FIX: The check for navigator.share has been removed from here ***
-
-      const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
-      const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
-      // Helper function to attempt sharing with file
-      const attemptFileShare = async () => {
-        return navigator.share({
+      // --- Simplified Sharing Logic ---
+      try {
+        // Attempt 1: Share the image file first
+        console.log("Attempting to share with file...");
+        await navigator.share({
           title: "AI Vibe Animal Matcher Result",
-          text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
+          text: `I got ${animalName}${confettiEmoji}! Find your vibe animal here: https://vibe-animal.vercel.app/`,
           files: [simpleFile],
         });
-      };
-
-      // Helper function for text-only fallback
-      const fallbackTextShare = async () => {
-        return navigator.share({
-          title: "AI Vibe Animal Matcher Result",
-          text: `Check out my vibe animal: ${animalName}${confettiEmoji}! Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-          url: "https://vibe-animal.vercel.app/",
-        });
-      };
-
-      // Try sharing with retries
-      let shareSuccess = false;
-      let lastError = null;
-      // First, always try file sharing (your preferred method)
-      for (let attempt = 1; attempt <= 3 && !shareSuccess; attempt++) {
-        try {
-          console.log(`Attempt ${attempt}: Trying file sharing...`);
-          // Check if we can share files (re-check each time as it can be inconsistent)
-          if (
-            navigator.canShare &&
-            navigator.canShare({ files: [simpleFile] })
-          ) {
-            await attemptFileShare();
-            shareSuccess = true;
-            console.log(`File sharing succeeded on attempt ${attempt}`);
-            break;
-          } else {
-            console.log(
-              `Attempt ${attempt}: canShare returned false, trying anyway...`
-            );
-            // Sometimes canShare lies, so try anyway
-            await attemptFileShare();
-            shareSuccess = true;
-            console.log(
-              `File sharing succeeded on attempt ${attempt} (despite canShare being false)`
-            );
-            break;
-          }
-        } catch (shareError) {
-          console.log(`Attempt ${attempt} failed:`, shareError);
-          lastError = shareError;
-
-          // If user canceled, stop trying
-          if (shareError.name === "AbortError") {
-            console.log("User canceled sharing");
-            return; // Don't show error for user cancellation
-          }
-
-          // If not the last attempt, wait a bit before retrying
-          if (attempt < 3) {
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
+        console.log("File sharing was successful.");
+      } catch (err) {
+        // If user cancels, do nothing.
+        if (err.name === "AbortError") {
+          console.log("User canceled the share dialog.");
+          return;
         }
-      }
 
-      // If file sharing failed after all attempts, try text-only sharing
-      if (!shareSuccess) {
+        console.log("File sharing failed, trying text fallback.", err);
+
+        // Attempt 2: Fallback to sharing text and URL
         try {
-          console.log("File sharing failed, trying text-only fallback...");
-          await fallbackTextShare();
-          shareSuccess = true;
-          console.log("Text-only sharing succeeded");
-        } catch (textShareError) {
-          console.log("Text-only sharing also failed:", textShareError);
-          lastError = textShareError;
-
-          // If user canceled, don't show error
-          if (textShareError.name === "AbortError") {
+          await navigator.share({
+            title: "AI Vibe Animal Matcher Result",
+            text: `I got ${animalName}${confettiEmoji}! Find your vibe animal here: https://vibe-animal.vercel.app/`,
+            url: "https://vibe-animal.vercel.app/",
+          });
+          console.log("Text sharing was successful.");
+        } catch (fallbackErr) {
+          // If user cancels the fallback, also do nothing.
+          if (fallbackErr.name === "AbortError") {
+            console.log("User canceled the fallback share dialog.");
             return;
           }
+          console.error("All sharing methods failed.", fallbackErr);
+          setError("Sharing is not available on this device.");
         }
-      }
-
-      // Only show error if nothing worked and it wasn't user cancellation
-      if (!shareSuccess && lastError && lastError.name !== "AbortError") {
-        console.error("All sharing attempts failed. Last error:", lastError);
-        setError("Sharing failed. Please try again.");
       }
     } catch (error) {
       console.error("Error preparing result for sharing:", error);
-      setError("Failed to prepare result for sharing. Please try again.");
+      setError("Failed to prepare the result for sharing.");
     } finally {
       setIsSaving(false);
     }
