@@ -572,8 +572,7 @@ function App() {
     setIsSaving(true);
     try {
       const animalName = extractAnimalName(result);
-      const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal:`;
-      const shareUrl = "https://vibe-animal.vercel.app/";
+      const shareText = `I got ${animalName}! ${confettiEmoji} Discover your vibe animal: https://vibe-animal.vercel.app/`;
       // Try to create an image of the result section
       let file = null;
       if (resultRef.current && window.html2canvas) {
@@ -596,17 +595,16 @@ function App() {
         await navigator.share({
           title: "My Vibe Animal Result",
           text: shareText,
-          url: shareUrl,
           files: [file],
         });
       } else if (navigator.share) {
         await navigator.share({
           title: "My Vibe Animal Result",
-          text: `${shareText} ${shareUrl}`,
+          text: shareText,
         });
       } else {
         // fallback: copy text to clipboard
-        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        await navigator.clipboard.writeText(shareText);
         alert("Share not supported, copied text to clipboard!");
       }
     } catch (error) {
