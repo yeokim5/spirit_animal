@@ -9,17 +9,17 @@ load_dotenv()
 # Define the available animals from the frontend dataset
 AVAILABLE_ANIMALS = {
     # Mammals
-    'leopard', 'lion', 'tiger', 'elephant', 'panda', 'bear', 'koala', 'monkey', 'gorilla', 'orangutan',
+    'leopard', 'lion', 'tiger', 'elephant', 'panda', 'bear', 'koala', 'gorilla', 'orangutan',
     'dog', 'poodle', 'wolf', 'fox', 'raccoon', 'cat', 'cow', 'ox', 'buffalo', 'pig', 'boar', 'goat',
     'sheep', 'ram', 'deer', 'horse', 'zebra', 'giraffe', 'camel', 'llama', 'hippopotamus', 'rhinoceros',
     'kangaroo', 'bat', 'mouse', 'rat', 'rabbit', 'chipmunk', 'hedgehog',
     
     # Birds
-    'chick', 'rooster', 'chicken', 'turkey', 'duck', 'swan', 'owl', 'eagle', 'dove', 'flamingo',
+    'chick', 'rooster', 'chicken', 'turkey', 'duck', 'swan','eagle', 'dove', 'flamingo',
     'peacock', 'parrot', 'penguin',
     
     # Aquatic
-    'fish', 'tropical_fish', 'blowfish', 'shark', 'dolphin', 'whale', 'seal', 'octopus', 'crab',
+    'fish', 'tropical_fish', 'blowfish', 'shark', 'whale', 'octopus', 'crab',
     'lobster', 'shrimp', 'squid',
     
     # Insects & others
@@ -148,19 +148,7 @@ def analyze_animal(image_path: str):
 
     # Format the available animals for the prompt
     available_animals_text = """
-    MAMMALS: leopard, lion, tiger, elephant, panda, bear, koala, monkey, gorilla, orangutan, dog, poodle, wolf, fox, raccoon, cat, cow, ox, buffalo, pig, boar, goat, sheep, ram, deer, horse, zebra, giraffe, camel, llama, hippopotamus, rhinoceros, kangaroo, bat, mouse, rat, rabbit, chipmunk, hedgehog
-    
-    BIRDS: chick, rooster, chicken, turkey, duck, swan, owl, eagle, dove, flamingo, peacock, parrot, penguin
-    
-    AQUATIC: fish, tropical_fish, blowfish, shark, dolphin, whale, seal, octopus, crab, lobster, shrimp, squid
-    
-    INSECTS & OTHERS: snail, butterfly, bug, ant, honeybee, cricket, spider, scorpion, mosquito
-    
-    REPTILES & AMPHIBIANS: turtle, crocodile, lizard, snake, frog
-    
-    MYTHICAL: dragon, unicorn
-    
-    EXTINCT: dinosaur
+    leopard, lion, tiger, elephant, panda, bear, koala, gorilla, orangutan, dog, poodle, wolf, fox, raccoon, cat, cow, ox, buffalo, pig, boar, goat, sheep, ram, deer, horse, zebra, giraffe, camel, llama, hippopotamus, rhinoceros, kangaroo, bat, mouse, rat, rabbit, chipmunk, hedgehog,chick, rooster, chicken, turkey, duck, swan, eagle, dove, flamingo, peacock, parrot, penguin,fish, tropical_fish, blowfish, shark, whale, seal, octopus, crab, lobster, shrimp, squid,snail, butterfly, bug, ant, honeybee, cricket, spider, scorpion, mosquito,turtle, crocodile, lizard, snake, frog,dragon, unicorn,dinosaur
     """
 
     prompt = f"""

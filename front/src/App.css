@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap");
 /* Reset and base styles */
 * {
   margin: 0;
@@ -20,11 +21,14 @@ body {
 
 /* Header */
 .header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 2rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 2rem;
+  width: 100%;
+  padding: 2rem 0rem 0rem 0rem;
 }
 
 .header h1 {
@@ -229,7 +233,7 @@ body {
   border: 1px solid #fcc;
   border-radius: 10px;
   padding: 1rem;
-  margin-bottom: 1rem;
+  margin: 1rem;
   color: #c33;
   text-align: center;
 }
@@ -680,4 +684,67 @@ body {
     width: 200px;
     height: 200px;
   }
+}
+
+.gradient-title {
+  font-family: "Alfa Slab One", cursive, sans-serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #95a7f8 0%, #5264b3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  margin-bottom: 0.5em;
+  letter-spacing: 1px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  justify-content: center;
+  width: 100%;
+}
+
+.header-emoji {
+  font-size: 2.2em;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+.wavy-underline {
+  display: inline-block;
+  position: relative;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #333;
+  margin-top: 0.5em;
+}
+
+.wavy-underline::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 6px;
+  background: url('data:image/svg+xml;utf8,<svg width="100" height="6" viewBox="0 0 100 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 3 Q 12.5 0 25 3 T 50 3 T 75 3 T 100 3" stroke="%23e52e71" stroke-width="2" fill="transparent"/></svg>')
+    repeat-x;
+  background-size: 100px 6px;
+  animation: wave-move 2s linear infinite;
+}
+
+@keyframes wave-move {
+  0% {
+    background-position-x: 0;
+  }
+  100% {
+    background-position-x: 100px;
+  }
+}
+
+.header h1,
+.header .gradient-title,
+.animal_name {
+  font-family: "Alfa Slab One", cursive, sans-serif;
 }

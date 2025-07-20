@@ -46,7 +46,6 @@ function App() {
     panda: "🐼",
     bear: "🐻",
     koala: "🐨",
-    monkey: "🐒",
     gorilla: "🦍",
     orangutan: "🦧",
     dog: "🐶",
@@ -86,7 +85,6 @@ function App() {
     turkey: "🦃",
     duck: "🦆",
     swan: "🦢",
-    owl: "🦉",
     eagle: "🦅",
     dove: "🕊️",
     flamingo: "🦩",
@@ -99,9 +97,7 @@ function App() {
     tropical_fish: "🐠",
     blowfish: "🐡",
     shark: "🦈",
-    dolphin: "🐬",
     whale: "🐳",
-    seal: "🦭",
     octopus: "🐙",
     crab: "🦀",
     lobster: "🦞",
@@ -206,7 +202,7 @@ function App() {
           .replace(/^animal\s*:\s*/i, "") // Remove "Animal:" or "animal:" without asterisks
           .replace(/\*\*/g, "") // Remove any remaining bold markers
           .trim();
-        html += `<div class="animal_name">${confettiEmoji} ${animalName} ${confettiEmoji}</div>`;
+        html += `<div class="animal_name">${confettiEmoji} ${animalName.toUpperCase()} ${confettiEmoji}</div>`;
         firstLineProcessed = true;
         continue;
       }
@@ -650,11 +646,23 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>AI Vibe Animal Matcher</h1>
-        <h2>
-          It uses the most advanced AI <br /> to discover what animal best
-          represents your vibe!
-        </h2>
+        <h1
+          className="gradient-title"
+          style={{ display: "flex", alignItems: "center", gap: "0.5em" }}
+        >
+          <span className="header-emoji">
+            {
+              Object.values(animalEmojiMap)[
+                Math.floor(Math.random() * Object.values(animalEmojiMap).length)
+              ]
+            }
+          </span>
+          AI Vibe Animal Matcher
+        </h1>
+        <h3 className="wavy-underline">
+          Use the most advanced AI to discover what animal best represents your
+          vibe!
+        </h3>
       </header>
 
       <main className="main">
@@ -739,6 +747,11 @@ function App() {
               </button>
             )}
           </div>
+          {error && (
+            <div className="error-message">
+              <p>❌ {error}</p>
+            </div>
+          )}
         </div>
 
         {/* Example Images Carousel - Only show when no result */}
@@ -762,12 +775,6 @@ function App() {
                 ))}
               </div>
             </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="error-message">
-            <p>❌ {error}</p>
           </div>
         )}
 

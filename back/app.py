@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import stripe
 from background_remover import remove_background
-from animal_analyzer import analyze_animal
 
 # Load environment variables
 load_dotenv()
@@ -20,10 +19,11 @@ app = Flask(__name__)
 allowed_origins = [
     "http://localhost:3000",  # Local development
     "http://localhost:5173",  # Vite default port
+    "http://localhost:5000",  # Vite default port
     "https://vibe-animal.vercel.app",  # Your production frontend
 ]
 
-CORS(app, origins=allowed_origins, methods=['GET', 'POST'], allow_headers=['Content-Type'])
+CORS(app, origins=allowed_origins, methods=['GET', 'POST', 'OPTIONS'], allow_headers=['Content-Type'])
 
 # Configuration
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
@@ -249,20 +249,8 @@ def analyze_animal_api(image_path: str):
     
     # Define the available animals from the frontend dataset
     available_animals = """
-    MAMMALS: leopard, lion, tiger, elephant, panda, bear, koala, monkey, gorilla, orangutan, dog, poodle, wolf, fox, raccoon, cat, cow, ox, buffalo, pig, boar, goat, sheep, ram, deer, horse, zebra, giraffe, camel, llama, hippopotamus, rhinoceros, kangaroo, bat, mouse, rat, rabbit, chipmunk, hedgehog
-    
-    BIRDS: chick, rooster, chicken, turkey, duck, swan, owl, eagle, dove, flamingo, peacock, parrot, penguin
-    
-    AQUATIC: fish, tropical_fish, blowfish, shark, dolphin, whale, seal, octopus, crab, lobster, shrimp, squid
-    
-    INSECTS & OTHERS: snail, butterfly, bug, ant, honeybee, cricket, spider, scorpion, mosquito
-    
-    REPTILES & AMPHIBIANS: turtle, crocodile, lizard, snake, frog
-    
-    MYTHICAL: dragon, unicorn
-    
-    EXTINCT: dinosaur
-    """
+    leopard, lion, tiger, elephant, panda, bear, koala, gorilla, orangutan, dog, poodle, wolf, fox, raccoon, cat, cow, ox, buffalo, pig, boar, goat, sheep, ram, deer, horse, zebra, giraffe, camel, llama, hippopotamus, rhinoceros, kangaroo, bat, mouse, rat, rabbit, chipmunk, hedgehog,chick, rooster, chicken, turkey, duck, swan, eagle, dove, flamingo, peacock, parrot, penguin,fish, tropical_fish, blowfish, shark, whale, octopus, crab, lobster, shrimp, squid,snail, butterfly, bug, ant, honeybee, cricket, spider, scorpion, mosquito,turtle, crocodile, lizard, snake, frog,dragon, unicorn,dinosaur
+"""
 
     # Define the prompt
     prompt = f"""
