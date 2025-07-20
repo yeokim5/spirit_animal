@@ -20,6 +20,18 @@ function App() {
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
 
+  // Example images for the carousel
+  const exampleImages = [
+    "/example/beast.jpg",
+    "/example/rohnaldo.jpg",
+    "/example/speed.jpg",
+    "/example/taylor.jpg",
+    "/example/wong.jpg",
+  ];
+
+  // State for carousel
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   const animalEmojiMap = {
     // Mammals
     leopard: "🐆",
@@ -300,6 +312,17 @@ function App() {
     return html;
   };
 
+  // Effect hook for carousel auto-rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % exampleImages.length
+      );
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [exampleImages.length]);
+
   // Effect hook to trigger confetti animation when a new result is available
   useEffect(() => {
     console.log("🎆 Confetti effect triggered with result:", result);
@@ -360,23 +383,40 @@ function App() {
     }
   }, [result]); // Effect runs whenever the 'result' state changes
 
+  // Allowed file extensions for images
+  const ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "bmp"];
+
   /**
    * Handles the selection of an image file, setting it as the selected file
    * and generating a preview.
    * @param {File} file - The selected image file.
    */
   const handleFileSelect = (file) => {
-    if (file && file.type.startsWith("image/")) {
-      setSelectedFile(file);
-      setError(null);
-      setResult(null); // Clear previous results
-      setShowConfetti(false); // Turn off confetti
-      setConfettiEmoji(""); // Clear confetti emoji
-      const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target.result); // Set image preview
-      reader.readAsDataURL(file); // Read file as Data URL
+    if (file) {
+      // Get file extension
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (file.type.startsWith("image/") && ALLOWED_EXTENSIONS.includes(ext)) {
+        setSelectedFile(file);
+        setError(null);
+        setResult(null); // Clear previous results
+        setShowConfetti(false); // Turn off confetti
+        setConfettiEmoji(""); // Clear confetti emoji
+        const reader = new FileReader();
+        reader.onload = (e) => setPreview(e.target.result); // Set image preview
+        reader.readAsDataURL(file); // Read file as Data URL
+      } else {
+        setError(
+          `Please upload an image in one of these formats: ${ALLOWED_EXTENSIONS.map(
+            (e) => e.toUpperCase()
+          ).join(", ")}`
+        );
+        setSelectedFile(null);
+        setPreview(null);
+      }
     } else {
       setError("Please select a valid image file");
+      setSelectedFile(null);
+      setPreview(null);
     }
   };
 
@@ -799,7 +839,7 @@ function App() {
                 <div className="upload-icon">📸</div>
                 <h3>Upload Your Image</h3>
                 <p>Drag and drop an image here, or use the buttons below</p>
-                <p className="file-types">Supports: JPG, PNG, GIF, BMP</p>
+                <p className="file-types">Supports: JPG, PNG, GIF, BMP, JPEG</p>
                 <div
                   className="upload-buttons"
                   style={{
@@ -863,6 +903,28 @@ function App() {
                 {result ? "Try Another Image" : "Reset"}
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Example Images Carousel */}
+        <div className="example-carousel-container">
+          <div className="example-carousel">
+            <div className="carousel-track">
+              {exampleImages.map((image, index) => (
+                <div
+                  key={index}
+                  className={`example-image-wrapper ${
+                    index === currentImageIndex ? "active" : ""
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Example ${index + 1}`}
+                    className="example-image"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

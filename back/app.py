@@ -100,7 +100,7 @@ def predict():
         if not allowed_file(file.filename):
             return jsonify({
                 'error': 'Invalid file type',
-                'message': f'Allowed file types: {", ".join(ALLOWED_EXTENSIONS)}'
+                'message': f'Please upload an image in one of these formats: {", ".join(ALLOWED_EXTENSIONS).upper()}'
             }), 400
         
         # Save uploaded file to temporary location
