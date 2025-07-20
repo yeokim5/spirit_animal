@@ -569,29 +569,31 @@ function App() {
 
     setIsSaving(true);
     try {
-      // 1. Extract necessary data
       const animalName = extractAnimalName(result);
       const fullParsedHtml = parseLLMResponse(result);
 
-      // 2. Helper function to create a styled container for rendering (No changes here)
+      // Helper function to create a styled container for rendering
       const createContainer = (content, isSimple = false) => {
         const container = document.createElement("div");
-
         if (isSimple) {
           // Square format for simple view
           container.style.cssText = `
-          position: fixed; top: -9999px; left: -9999px; width: 800px; height: 800px;
+          position: fixed;
+          top: -9999px; left: -9999px; width: 800px; height: 800px;
           background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%); padding: 30px;
           font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #333;
           box-sizing: border-box; display: flex; flex-direction: column;
-          justify-content: center; align-items: center; overflow: hidden;
+          justify-content: center; align-items: center;
+          overflow: hidden;
         `;
         } else {
           // Original rectangular format for detailed view
           container.style.cssText = `
-          position: fixed; top: -9999px; left: -9999px; width: 800px;
+          position: fixed;
+          top: -9999px; left: -9999px; width: 800px;
           background: linear-gradient(135deg, #e4e4e4 0%, #ffffff 100%);
-          padding: 40px; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          padding: 40px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
           color: #333; box-sizing: border-box;
         `;
         }
@@ -621,7 +623,6 @@ function App() {
         return container;
       };
 
-      // 3. Define HTML content for both simple and detailed images (No changes here)
       const simpleContent = `
       <div class="save-wrapper square">
         <div class="share-header">
@@ -645,49 +646,17 @@ function App() {
     `;
 
       const simpleContainer = createContainer(simpleContent, true);
-      const detailedContainer = createContainer(detailedContent, false);
-
-      // 4. Append containers to the DOM to be rendered (No changes here)
       document.body.appendChild(simpleContainer);
-      document.body.appendChild(detailedContainer);
 
-      // 5. Render both containers to canvases in parallel (No changes here)
-      const [simpleCanvas, detailedCanvas] = await Promise.all([
-        html2canvas(simpleContainer, {
-          scale: 2,
-          useCORS: true,
-          width: 800,
-          height: 800,
-        }),
-        html2canvas(detailedContainer, {
-          scale: 2,
-          useCORS: true,
-        }),
-      ]);
+      const simpleCanvas = await html2canvas(simpleContainer, {
+        scale: 2,
+        useCORS: true,
+        width: 800,
+        height: 800,
+      });
 
-      // 6. Clean up the containers from the DOM (No changes here)
       document.body.removeChild(simpleContainer);
-      document.body.removeChild(detailedContainer);
 
-      // 7. Helper to trigger download for a canvas (No changes here)
-      // const downloadCanvas = (canvas, filename) => {
-      //   canvas.toBlob((blob) => {
-      //     if (!blob) {
-      //       console.error("Failed to create blob from canvas for", filename);
-      //       return;
-      //     }
-      //     const url = URL.createObjectURL(blob);
-      //     const link = document.createElement("a");
-      //     link.href = url;
-      //     link.download = filename;
-      //     document.body.appendChild(link);
-      //     link.click();
-      //     document.body.removeChild(link);
-      //     URL.revokeObjectURL(url);
-      //   }, "image/png");
-      // };
-
-      // Helper to convert a canvas to a File object with better error handling
       const canvasToFile = (canvas, filename) => {
         return new Promise((resolve, reject) => {
           canvas.toBlob(
@@ -696,355 +665,51 @@ function App() {
                 reject(new Error("Canvas to Blob conversion failed."));
                 return;
               }
-              console.log("📄 Created blob:", {
-                size: blob.size,
-                type: blob.type,
-              });
               const file = new File([blob], filename, { type: "image/png" });
-              console.log("📁 Created file:", {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-              });
               resolve(file);
             },
             "image/png",
             0.9
-          ); // Added quality parameter for better compression
+          );
         });
       };
 
-      // Check if we're on a mobile device and specifically iOS
       const isMobile =
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
           navigator.userAgent
         );
-      const isIOS =
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform &&
-          navigator.platform.indexOf("Mac") !== -1 &&
-          navigator.maxTouchPoints > 1);
-      console.log("📱 Device type:", isMobile ? "Mobile" : "Desktop");
-      console.log("🍎 iOS device:", isIOS);
-      console.log("🔧 Platform:", navigator.platform);
-      console.log("👆 Max touch points:", navigator.maxTouchPoints);
 
-      // Helper function to trigger download on iOS
-      const downloadForIOS = (canvas, filename) => {
-        return new Promise((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Failed to create blob from canvas"));
-                return;
-              }
-
-              // For iOS, create a data URL instead of blob URL for better compatibility
-              const reader = new FileReader();
-              reader.onload = () => {
-                const dataUrl = reader.result;
-
-                // Create a temporary link element
-                const link = document.createElement("a");
-                link.href = dataUrl;
-                link.download = filename;
-                link.style.display = "none";
-
-                // Add to DOM, click, and cleanup
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                resolve();
-              };
-              reader.onerror = () => reject(new Error("Failed to read blob"));
-              reader.readAsDataURL(blob);
-            },
-            "image/png",
-            0.9
-          );
-        });
-      };
-
-      // Helper function for iOS-specific sharing
-      const shareForIOS = async (canvas, animalName) => {
-        return new Promise((resolve, reject) => {
-          canvas.toBlob(
-            async (blob) => {
-              if (!blob) {
-                reject(new Error("Failed to create blob from canvas"));
-                return;
-              }
-
-              try {
-                // Create a File object
-                const file = new File([blob], `vibe-animal-${animalName}.png`, {
-                  type: "image/png",
-                });
-
-                // Try to share with files first
-                if (
-                  navigator.canShare &&
-                  navigator.canShare({ files: [file] })
-                ) {
-                  await navigator.share({
-                    title: "Vibe Animal Matcher Result",
-                    text: `Check out my vibe animal: ${animalName}! 🦁`,
-                    files: [file],
-                  });
-                  resolve();
-                  return;
-                }
-
-                // Fallback to text-only sharing
-                await navigator.share({
-                  title: "Vibe Animal Matcher Result",
-                  text: `Check out my vibe animal: ${animalName}! 🦁 Visit https://vibe-animal.vercel.app/ to try it yourself!`,
-                });
-                resolve();
-              } catch (error) {
-                reject(error);
-              }
-            },
-            "image/png",
-            0.9
-          );
-        });
-      };
-
-      // Helper function to create a shareable image overlay for iOS
-      const createShareableImageOverlay = (canvas, animalName) => {
-        return new Promise((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error("Failed to create blob from canvas"));
-                return;
-              }
-
-              const reader = new FileReader();
-              reader.onload = () => {
-                const dataUrl = reader.result;
-
-                // Create overlay container
-                const overlay = document.createElement("div");
-                overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.8);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                z-index: 10000;
-                padding: 20px;
-              `;
-
-                // Create image container
-                const imageContainer = document.createElement("div");
-                imageContainer.style.cssText = `
-                max-width: 90%;
-                max-height: 80%;
-                background: white;
-                border-radius: 15px;
-                padding: 20px;
-                text-align: center;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-              `;
-
-                // Create image
-                const img = document.createElement("img");
-                img.src = dataUrl;
-                img.style.cssText = `
-                max-width: 100%;
-                max-height: 70vh;
-                border-radius: 10px;
-                margin-bottom: 15px;
-              `;
-
-                // Create instructions
-                const instructions = document.createElement("p");
-                instructions.textContent =
-                  "Long press the image above to save it to your Photos!";
-                instructions.style.cssText = `
-                color: #666;
-                font-size: 16px;
-                margin: 10px 0;
-              `;
-
-                // Create close button
-                const closeBtn = document.createElement("button");
-                closeBtn.textContent = "Close";
-                closeBtn.style.cssText = `
-                background: #667eea;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
-                margin-top: 10px;
-              `;
-                closeBtn.onclick = () => {
-                  document.body.removeChild(overlay);
-                  resolve();
-                };
-
-                // Assemble overlay
-                imageContainer.appendChild(img);
-                imageContainer.appendChild(instructions);
-                imageContainer.appendChild(closeBtn);
-                overlay.appendChild(imageContainer);
-
-                // Add to DOM
-                document.body.appendChild(overlay);
-
-                // Auto-close after 10 seconds
-                setTimeout(() => {
-                  if (document.body.contains(overlay)) {
-                    document.body.removeChild(overlay);
-                    resolve();
-                  }
-                }, 10000);
-              };
-              reader.onerror = () => reject(new Error("Failed to read blob"));
-              reader.readAsDataURL(blob);
-            },
-            "image/png",
-            0.9
-          );
-        });
-      };
-
-      // Try sharing with Web Share API if available
       if (navigator.share && typeof navigator.share === "function") {
         try {
-          // For iOS, use the specialized sharing function
-          if (isIOS) {
-            console.log("🍎 iOS detected, using specialized sharing...");
-            try {
-              await shareForIOS(simpleCanvas, animalName);
-              console.log("✅ iOS specialized share successful!");
-              return;
-            } catch (iosShareError) {
-              console.log(
-                "⚠️ iOS specialized share failed, trying download fallback..."
-              );
-              // Fallback to overlay for iOS
-              try {
-                await createShareableImageOverlay(simpleCanvas, animalName);
-                console.log("✅ iOS overlay fallback successful!");
-                return;
-              } catch (overlayError) {
-                console.error(
-                  "❌ iOS overlay fallback also failed:",
-                  overlayError
-                );
-                // Final fallback to download
-                try {
-                  await downloadForIOS(
-                    simpleCanvas,
-                    `vibe-animal-result-${Date.now()}.png`
-                  );
-                  console.log("✅ iOS download fallback successful!");
-                  setError(
-                    "Image saved to your Photos! You can now share it manually."
-                  );
-                  setTimeout(() => setError(null), 4000);
-                  return;
-                } catch (downloadError) {
-                  console.error(
-                    "❌ iOS download fallback also failed:",
-                    downloadError
-                  );
-                }
-              }
-            }
-          }
-
-          // For other devices, use the original sharing logic
           const simpleFileName = `vibe-animal-result-${Date.now()}.png`;
           const simpleFile = await canvasToFile(simpleCanvas, simpleFileName);
 
-          console.log(
-            "📤 Attempting to share file:",
-            simpleFile.name,
-            "Size:",
-            simpleFile.size
-          );
-
-          // Check if we can share files
           if (
             navigator.canShare &&
             navigator.canShare({ files: [simpleFile] })
           ) {
-            console.log("✅ Can share files, attempting share...");
             await navigator.share({
               title: "Vibe Animal Matcher Result",
               text: `Check out my vibe animal: ${animalName}! 🦁`,
               files: [simpleFile],
             });
-            console.log("✅ Share successful!");
           } else {
-            // Fallback: share text and URL
-            console.log("⚠️ Cannot share files, trying text-only share...");
             await navigator.share({
               title: "Vibe Animal Matcher Result",
               text: `Check out my vibe animal: ${animalName}! 🦁 Visit https://vibe-animal.vercel.app/ to try it yourself!`,
             });
-            console.log("✅ Text-only share successful!");
           }
         } catch (error) {
-          console.error("❌ Share failed:", error);
-
-          // Don't trigger download if the user simply cancelled the share dialog
           if (error.name !== "AbortError") {
-            // Show appropriate error message
             if (isMobile) {
-              setError(
-                "Sharing not available. Try taking a screenshot instead!"
-              );
-              setTimeout(() => setError(null), 4000);
+              setError("Sharing not available on this device.");
+              setTimeout(() => setError(null), 3000);
             }
-          } else {
-            console.log("✅ Share action was cancelled by the user.");
           }
         }
       } else {
-        console.log("❌ No share API available on this device.");
-
-        // For iOS without share API, try overlay first, then download
-        if (isIOS) {
-          console.log("🍎 iOS without share API, attempting overlay...");
-          try {
-            await createShareableImageOverlay(simpleCanvas, animalName);
-            console.log("✅ iOS overlay successful!");
-            return;
-          } catch (overlayError) {
-            console.error("❌ iOS overlay failed:", overlayError);
-            // Fallback to download
-            try {
-              await downloadForIOS(
-                simpleCanvas,
-                `vibe-animal-result-${Date.now()}.png`
-              );
-              console.log("✅ iOS download successful!");
-              setError(
-                "Image saved to your Photos! You can now share it manually."
-              );
-              setTimeout(() => setError(null), 4000);
-              return;
-            } catch (downloadError) {
-              console.error("❌ iOS download failed:", downloadError);
-            }
-          }
-        }
-
-        setError("Sharing is not supported. Try taking a screenshot instead!");
-        setTimeout(() => setError(null), 4000);
+        setError("Sharing is not supported on this device or browser.");
+        setTimeout(() => setError(null), 3000);
       }
     } catch (error) {
       console.error("Error saving result:", error);
@@ -1053,7 +718,6 @@ function App() {
       setIsSaving(false);
     }
   };
-
   return (
     <div className="app">
       <header className="header">
