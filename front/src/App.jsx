@@ -487,10 +487,10 @@ function App() {
     }
 
     // Check if user has already paid; if not, show payment popup
-    if (!hasPaid) {
-      setShowPaymentPopup(true);
-      return;
-    }
+    // if (!hasPaid) {
+    //   setShowPaymentPopup(true);
+    //   return;
+    // }
 
     // Proceed with analysis if payment is complete
     await performAnalysis();
